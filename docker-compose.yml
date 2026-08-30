@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: zoneguard-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DEMO_MODE=true
+      - REAL_DATA_MODE=false
+      - DATABASE_URL=sqlite:///./zoneguard.db
+      - SECRET_KEY=zoneguard-sih-2026-production-key
+    volumes:
+      - ./backend/zoneguard.db:/app/zoneguard.db
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: zoneguard-frontend
+    ports:
+      - "80:80"
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+# Optional PostgreSQL with PostGIS extension for Real Data Mode
+#  postgis:
+#    image: postgis/postgis:15-3.3
+#    container_name: zoneguard-postgis
+#    environment:
+#      - POSTGRES_DB=zoneguard
+#      - POSTGRES_USER=zoneguard_admin
+#      - POSTGRES_PASSWORD=zoneguard_secure_pw
+#    ports:
+#      - "5432:5432"
+#    volumes:
+#      - postgis_data:/var/lib/postgresql/data
+
+# volumes:
+#  postgis_data:

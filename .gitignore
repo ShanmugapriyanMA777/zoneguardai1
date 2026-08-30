@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+backend/venv/
+.venv/
+env/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+backend/__pycache__/
+backend/*/__pycache__/
+backend/*/*/__pycache__/
+
+# Production Build
+dist/
+build/
+frontend/dist/
+
+# Logs & DB
+*.log
+backend/zoneguard.db
+*.sqlite3
+
+# Environment Variables
+.env
+.env.local
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

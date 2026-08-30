@@ -63,12 +63,17 @@ export const api = {
   getSiteDetails: (code) => fetchApi(`/relocation/sites/${code}`),
   getRecommendation: (zoneCode) => fetchApi(`/relocation/recommend/${zoneCode}`),
   getDefaultAHP: () => fetchApi('/relocation/ahp/default-matrix'),
+  getAHPMatrix: () => fetchApi('/relocation/ahp/default-matrix'),
   calculateAHP: (matrix) => fetchApi('/relocation/ahp/calculate', {
     method: 'POST',
     body: JSON.stringify({ matrix }),
   }),
   getSiteCapacity: (siteCode, targetPop = 0) => fetchApi(`/carrying-capacity/${siteCode}?target_population=${targetPop}`),
   simulateCapacity: (data) => fetchApi('/carrying-capacity/simulate', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  calculateCarryingCapacity: (data) => fetchApi('/carrying-capacity/simulate', {
     method: 'POST',
     body: JSON.stringify(data),
   }),

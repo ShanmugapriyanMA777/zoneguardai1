@@ -38,8 +38,8 @@ export default function LandingPage({ onLaunch, onExploreRedZones, stats }) {
     {
       icon: Users,
       title: "Carrying Capacity Engine",
-      badge: "PCC → RCC → ECC",
-      description: "Calculates Physical (PCC), Real (RCC), and Effective (ECC) carrying capacity considering terrain constraints, medical, water, and sanitation factors.",
+      badge: "Safe Population Quota",
+      description: "Calculates spatial habitable capacity considering terrain slope constraints, medical coverage, potable water, and sanitation factors.",
       border: "border-emerald-300 bg-emerald-50/70 text-emerald-900",
       iconColor: "text-emerald-600 bg-emerald-100",
       badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-300"
@@ -47,7 +47,7 @@ export default function LandingPage({ onLaunch, onExploreRedZones, stats }) {
     {
       icon: Compass,
       title: "GIS-MCDA + AHP Relocation",
-      badge: "Saaty Consistency CR < 0.10",
+      badge: "AHP Suitability Ranking",
       description: "Ranks candidate relocation sites with multi-criteria weighted overlay and automated capacity matching for high-risk red zones.",
       border: "border-yellow-300 bg-yellow-50/70 text-yellow-900",
       iconColor: "text-yellow-600 bg-yellow-100",
@@ -201,7 +201,7 @@ export default function LandingPage({ onLaunch, onExploreRedZones, stats }) {
           <span className="text-amber-600 font-black">→</span>
           <span className="px-3 py-1.5 rounded-xl bg-amber-100 text-amber-800 border border-amber-300 shadow-sm">3. PREDICT (Random Forest)</span>
           <span className="text-amber-600 font-black">→</span>
-          <span className="px-3 py-1.5 rounded-xl bg-amber-100 text-amber-800 border border-amber-300 shadow-sm">4. CALCULATE (PCC→ECC)</span>
+          <span className="px-3 py-1.5 rounded-xl bg-amber-100 text-amber-800 border border-amber-300 shadow-sm">4. CAPACITY ANALYSIS</span>
           <span className="text-emerald-600 font-black">→</span>
           <span className="px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm">5. FIND SAFE SITES</span>
           <span className="text-emerald-600 font-black">→</span>

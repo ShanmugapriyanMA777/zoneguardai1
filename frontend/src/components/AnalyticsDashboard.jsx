@@ -185,8 +185,8 @@ export default function AnalyticsDashboard() {
             <BrainCircuit className="w-4 h-4 text-amber-600" />
             <span>Weight of Evidence (WoE) Conditioning Factor Attribution</span>
           </h3>
-          <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-xl border border-slate-300">
-            W+ = ln( P(B|D) / P(B|D̄) )
+          <span className="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-xl border border-slate-300">
+            Spatial Association Contrast Ranking
           </span>
         </div>
 

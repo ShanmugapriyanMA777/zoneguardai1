@@ -384,7 +384,7 @@ export default function RedZoneExplorer({ onOpenShap, onOpenReport, onOpenReloca
                       </span>
                     </div>
                     <p className="text-xs text-emerald-900 leading-relaxed font-medium">
-                      <strong>Action:</strong> {selectedZoneDetail.recommended_action}. Target community will be accommodated in designated stable tablelands meeting carrying capacity thresholds ($PCC \to RCC \to ECC$).
+                      <strong>Action:</strong> {selectedZoneDetail.recommended_action}. Target community will be accommodated in designated stable tablelands meeting verified environmental and civic carrying capacity standards.
                     </p>
                     <button
                       onClick={() => onOpenRelocationView && onOpenRelocationView(selectedZoneDetail.code)}

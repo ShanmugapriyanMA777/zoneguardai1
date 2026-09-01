@@ -97,20 +97,20 @@ export default function CarryingCapacityStudio({ onApplyToPlanner }) {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-black font-heading text-slate-950">Carrying Capacity Engine</h2>
+              <h2 className="text-xl font-black font-heading text-slate-950">Carrying Capacity Assessment Studio</h2>
               <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm">
-                PCC → RCC → ECC Methodology
+                Safe Population Limits Analysis
               </span>
             </div>
             <p className="text-xs text-slate-600 font-medium mt-0.5">
-              Physical, Real, and Effective Population Carrying Capacity with Multi-Factor Environmental & Infrastructure Reduction
+              Gross Footprint, Environmental Setbacks, and Essential Civic Infrastructure Capacity Limits
             </p>
           </div>
         </div>
 
         {/* Preset Selector */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-700 font-mono font-bold">TN Candidate Site:</span>
+          <span className="text-xs text-slate-700 font-mono font-bold">Candidate Safe Township:</span>
           <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-300">
             {['SITE-07', 'SITE-04', 'SITE-11'].map((preset) => (
               <button
@@ -129,40 +129,40 @@ export default function CarryingCapacityStudio({ onApplyToPlanner }) {
         </div>
       </div>
 
-      {/* Visual Pipeline Progression (PCC -> RCC -> ECC) */}
+      {/* Visual Pipeline Progression (Stage 1 -> Stage 2 -> Stage 3) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Stage 1: PCC */}
+        {/* Stage 1: Gross Usable Area */}
         <div className="p-6 rounded-3xl bg-white border-2 border-slate-200 shadow-lg relative overflow-hidden">
-          <div className="text-[11px] font-mono font-black uppercase tracking-wider text-slate-600">1. Physical Capacity</div>
-          <div className="text-xs font-bold text-amber-700 mt-0.5">PCC = Usable Area / Min Area</div>
+          <div className="text-[11px] font-mono font-black uppercase tracking-wider text-slate-600">Stage 1 • Gross Physical Capacity</div>
+          <div className="text-xs font-bold text-slate-800 mt-0.5">Unconstrained Spatial Footprint</div>
           <div className="text-3xl font-black text-slate-950 mt-3">{capacityResult?.pcc?.toLocaleString() || 5000}</div>
-          <div className="text-xs text-slate-600 mt-1">Theoretical maximum unconstrained footprint</div>
+          <div className="text-xs text-slate-600 mt-1">Maximum theoretical population for gross land parcel</div>
           <div className="mt-3 text-[11px] font-mono text-slate-800 font-bold border-t border-slate-200 pt-2">
-            {params.usable_area_sqm.toLocaleString()} m² @ {params.min_area_per_person} m²/person
+            {params.usable_area_sqm.toLocaleString()} m² @ {params.min_area_per_person} m²/person standard
           </div>
         </div>
 
-        {/* Stage 2: RCC */}
+        {/* Stage 2: Environmental & Topographic Threshold */}
         <div className="p-6 rounded-3xl bg-amber-50/70 border-2 border-amber-300 shadow-lg relative overflow-hidden">
-          <div className="text-[11px] font-mono font-black uppercase tracking-wider text-amber-800">2. Real Capacity</div>
-          <div className="text-xs font-bold text-amber-800 mt-0.5">RCC = PCC × Correction Factor ({capacityResult?.correction_factor || 0.78})</div>
+          <div className="text-[11px] font-mono font-black uppercase tracking-wider text-amber-800">Stage 2 • Environmental Threshold</div>
+          <div className="text-xs font-bold text-amber-800 mt-0.5">Slope Gradient & Flood Buffer Deductions</div>
           <div className="text-3xl font-black text-amber-800 mt-3">{capacityResult?.rcc?.toLocaleString() || 3900}</div>
-          <div className="text-xs text-slate-700 mt-1">Terrain slope & environmental setbacks applied</div>
+          <div className="text-xs text-slate-700 mt-1">Hazard-safe buildable terrain exclusion applied</div>
           <div className="mt-3 text-[11px] font-mono text-amber-900 font-bold border-t border-amber-200 pt-2 flex justify-between">
-            <span>Slope Factor: {capacityResult?.intermediate_factors?.slope_factor}</span>
-            <span>Water Buffer: {capacityResult?.intermediate_factors?.water_factor}</span>
+            <span>Terrain Stability: {(capacityResult?.intermediate_factors?.slope_factor * 100 || 88).toFixed(0)}%</span>
+            <span>Drainage Clearance: {(capacityResult?.intermediate_factors?.water_factor * 100 || 90).toFixed(0)}%</span>
           </div>
         </div>
 
-        {/* Stage 3: ECC */}
+        {/* Stage 3: Operational Capacity */}
         <div className="p-6 rounded-3xl bg-emerald-50/80 border-2 border-emerald-400 shadow-xl relative overflow-hidden">
-          <div className="text-[11px] font-mono font-black uppercase tracking-wider text-emerald-800">3. Effective Capacity (Final)</div>
-          <div className="text-xs font-bold text-emerald-800 mt-0.5">ECC = RCC × Management Factor ({capacityResult?.management_factor || 0.82})</div>
+          <div className="text-[11px] font-mono font-black uppercase tracking-wider text-emerald-800">Stage 3 • Verified Habitable Capacity</div>
+          <div className="text-xs font-bold text-emerald-800 mt-0.5">Civic Services & Evacuation Access Ready</div>
           <div className="text-3xl font-black text-emerald-700 mt-3">{capacityResult?.ecc?.toLocaleString() || 3198}</div>
-          <div className="text-xs text-emerald-900 font-bold mt-1">Ready for immediate pre-disaster habitation</div>
+          <div className="text-xs text-emerald-900 font-bold mt-1">Final approved safe citizens quota for relocation</div>
           <div className="mt-3 text-[11px] font-mono text-emerald-900 font-bold border-t border-emerald-200 pt-2 flex justify-between">
-            <span>Road Factor: {capacityResult?.intermediate_factors?.road_factor}</span>
-            <span>Health/San: {capacityResult?.intermediate_factors?.health_factor}</span>
+            <span>Road Access: {(capacityResult?.intermediate_factors?.road_factor * 100 || 85).toFixed(0)}%</span>
+            <span>Health & Water: {(capacityResult?.intermediate_factors?.health_factor * 100 || 96).toFixed(0)}%</span>
           </div>
         </div>
       </div>

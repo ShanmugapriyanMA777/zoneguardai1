@@ -34,7 +34,7 @@ export default function Navbar({
     { id: 'command-center', label: 'GIS Command Center', icon: Map, badge: 'Pan-India' },
     { id: 'red-zones', label: 'Red Zones & Precautions', icon: AlertOctagon, badge: 'Live Situation' },
     { id: 'deformation', label: 'Satellite Ingestion Studio', icon: Activity, badge: 'SAR • DEM • LULC' },
-    { id: 'capacity', label: 'Carrying Capacity', icon: Users, badge: 'PCC→ECC' },
+    { id: 'capacity', label: 'Carrying Capacity', icon: Users, badge: 'Safe Quota' },
     { id: 'relocation', label: 'Safe Relocation Planner', icon: Compass, badge: 'AHP-MCDA' },
     { id: 'analytics', label: 'Analytics & XAI', icon: BarChart3 },
     { id: 'field-app', label: 'Field Survey Portal', icon: ClipboardCheck, badge: 'Offline Sync' },

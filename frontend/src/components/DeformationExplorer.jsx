@@ -473,20 +473,42 @@ export default function DeformationExplorer() {
 
           <div className="lg:col-span-6 p-6 rounded-3xl bg-white border-2 border-slate-200 shadow-xl space-y-4">
             <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
-              <Info className="w-5 h-5 text-amber-600" />
-              <h3 className="text-base font-black text-slate-950">Topographic Susceptibility Equations</h3>
+              <Mountain className="w-5 h-5 text-amber-600" />
+              <h3 className="text-base font-black text-slate-950">Terrain Instability Risk Thresholds</h3>
             </div>
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3 font-mono text-xs text-slate-800">
-              <div className="p-3 rounded-xl bg-white border border-slate-200 font-bold">
-                Slope Gradient: θ = arctan(√((∂z/∂x)² + (∂z/∂y)²))
+            
+            <div className="space-y-3">
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-slate-900">Slope Gradient Hazard Matrix</div>
+                  <div className="text-[11px] text-slate-500 font-medium">Critical Shear Threshold: &gt; 30° steep scarp zone</div>
+                </div>
+                <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-xl bg-red-100 text-red-800 border border-red-300">
+                  Critical
+                </span>
               </div>
-              <div className="p-3 rounded-xl bg-white border border-slate-200 font-bold">
-                Topographic Wetness Index: TWI = ln(a / tan(β))
+
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-slate-900">Hydrological Wetness Accumulation (TWI)</div>
+                  <div className="text-[11px] text-slate-500 font-medium">Monsoon pore-pressure pooling in slope concavities</div>
+                </div>
+                <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-xl bg-amber-100 text-amber-800 border border-amber-300">
+                  Elevated
+                </span>
               </div>
-              <div className="p-3 rounded-xl bg-white border border-slate-200 font-bold">
-                Stream Power Index: SPI = a · tan(β)
+
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-slate-900">Sub-Pixel Elevation Accuracy</div>
+                  <div className="text-[11px] text-slate-500 font-medium">10m stereo digital elevation modeling with LE90 precision</div>
+                </div>
+                <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-xl bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  Active
+                </span>
               </div>
             </div>
+
             <p className="text-xs text-slate-600 leading-relaxed font-medium">
               Cartosat DEM 10m grid provides sub-pixel accuracy for hydrological flow routing, scarp toe destabilization detection, and high-altitude slope stability modeling.
             </p>

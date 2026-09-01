@@ -16,7 +16,9 @@ import {
   ChevronRight,
   Sparkles,
   Layers,
-  FileCheck
+  FileCheck,
+  Smartphone,
+  ExternalLink
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { api } from '../utils/api';
@@ -204,7 +206,32 @@ export default function FieldOfficerMobileApp({ onSurveySubmitted }) {
         </div>
       </div>
 
-      {/* Main Full-Width Responsive Workspace */}
+      {/* Standalone Field Officer Web Portal Banner */}
+      <div className="p-4 rounded-3xl bg-sky-50 border-2 border-sky-300 flex flex-wrap items-center justify-between gap-3 shadow-md">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-sky-600 flex items-center justify-center text-white font-bold shadow-sm">
+            <Smartphone className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-xs font-bold text-sky-950 flex items-center gap-2">
+              <span>Standalone Field Officer Mobile Website Active</span>
+              <span className="text-[10px] font-mono font-bold bg-sky-200 text-sky-900 px-2 py-0.5 rounded-full">Port 5174</span>
+            </div>
+            <p className="text-[11px] text-sky-800 font-medium">Field disaster officers can open this dedicated lightweight website on field tablets and smartphones for offline surveys.</p>
+          </div>
+        </div>
+        <a
+          href="http://localhost:5174"
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-black shadow-md transition-all cursor-pointer"
+        >
+          <span>Launch Standalone Field Website</span>
+          <ExternalLink className="w-4 h-4" />
+        </a>
+      </div>
+
+      {/* Main Grid: Form on Left + Real-time History on Right */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left 7 Cols: Ground Survey Input Form */}
         <div className="lg:col-span-7 p-6 rounded-3xl bg-white border-2 border-slate-200 shadow-xl space-y-5">

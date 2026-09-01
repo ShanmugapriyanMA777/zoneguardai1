@@ -15,7 +15,9 @@ import {
   Layers,
   RotateCcw,
   Sparkles,
-  AlertOctagon
+  AlertOctagon,
+  Smartphone,
+  ExternalLink
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -37,7 +39,7 @@ export default function Navbar({
     { id: 'capacity', label: 'Carrying Capacity', icon: Users, badge: 'Safe Quota' },
     { id: 'relocation', label: 'Safe Relocation Planner', icon: Compass, badge: 'AHP-MCDA' },
     { id: 'analytics', label: 'Analytics & XAI', icon: BarChart3 },
-    { id: 'field-app', label: 'Field Survey Portal', icon: ClipboardCheck, badge: 'Offline Sync' },
+    { id: 'field-app', label: 'Field Survey Portal', icon: ClipboardCheck, badge: 'Dedicated App' },
   ];
 
   const handleRoleChange = (role) => {
@@ -121,6 +123,19 @@ export default function Navbar({
               </span>
             )}
           </button>
+
+          {/* Standalone Field Officer Portal Link */}
+          <a
+            href="http://localhost:5174"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-300 text-xs font-bold text-sky-800 transition-all cursor-pointer shadow-sm"
+            title="Open Dedicated Mobile Field Officer Website (Port 5174)"
+          >
+            <Smartphone className="w-3.5 h-3.5 text-sky-600" />
+            <span className="hidden lg:inline">Field App (Port 5174)</span>
+            <ExternalLink className="w-3 h-3 text-sky-500" />
+          </a>
 
           {/* Role Switcher */}
           <div className="relative">

@@ -7,7 +7,6 @@ import DeformationExplorer from './components/DeformationExplorer';
 import CarryingCapacityStudio from './components/CarryingCapacityStudio';
 import RelocationPlanner from './components/RelocationPlanner';
 import AnalyticsDashboard from './components/AnalyticsDashboard';
-import FieldOfficerMobileApp from './components/FieldOfficerMobileApp';
 import ShapModal from './components/ShapModal';
 import DecisionReportModal from './components/DecisionReportModal';
 import AlertsModal from './components/AlertsModal';
@@ -162,11 +161,11 @@ export default function App() {
   const handleRoleChange = async (newRole) => {
     setCurrentRole(newRole);
     if (newRole === 'FIELD_OFFICER') {
-      setCurrentTab('field-app');
+      window.open('http://localhost:5174', '_blank');
     } else if (newRole === 'ANALYST') {
       setCurrentTab('relocation');
     } else {
-      if (currentTab === 'field-app') setCurrentTab('command-center');
+      if (currentTab === 'landing') setCurrentTab('command-center');
     }
   };
 
@@ -232,12 +231,6 @@ export default function App() {
 
           {currentTab === 'analytics' && (
             <AnalyticsDashboard />
-          )}
-
-          {currentTab === 'field-app' && (
-            <FieldOfficerMobileApp
-              onSurveySubmitted={loadInitialData}
-            />
           )}
         </ErrorBoundary>
       </main>

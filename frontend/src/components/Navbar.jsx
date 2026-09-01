@@ -39,7 +39,6 @@ export default function Navbar({
     { id: 'capacity', label: 'Carrying Capacity', icon: Users, badge: 'Safe Quota' },
     { id: 'relocation', label: 'Safe Relocation Planner', icon: Compass, badge: 'AHP-MCDA' },
     { id: 'analytics', label: 'Analytics & XAI', icon: BarChart3 },
-    { id: 'field-app', label: 'Field Survey Portal', icon: ClipboardCheck, badge: 'Dedicated App' },
   ];
 
   const handleRoleChange = (role) => {

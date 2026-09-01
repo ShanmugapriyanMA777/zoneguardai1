@@ -32,7 +32,7 @@ import {
 import confetti from 'canvas-confetti';
 import { api } from '../utils/api';
 
-// Map pan helper component with error resilience
+// Map pan helper component with strict NaN and coordinate validation
 function MapPanTo({ coords, zoom }) {
   const map = useMap();
   useEffect(() => {
@@ -46,16 +46,16 @@ function MapPanTo({ coords, zoom }) {
       !isNaN(coords[1])
     ) {
       try {
-        map.flyTo(coords, zoom || 12, { duration: 1.2 });
+        map.flyTo([coords[0], coords[1]], zoom || 12, { duration: 1.2 });
       } catch (e) {
-        console.warn("MapPanTo flyTo warning:", e);
+        console.warn("MapPanTo flyTo handled:", e);
       }
     }
   }, [coords, zoom, map]);
   return null;
 }
 
-// Light-Mode Basemap Configurations (NO DARK MODE)
+// Light-Mode Basemaps Only (Zero Dark Mode)
 const LIGHT_BASEMAPS = {
   terrain: {
     name: 'Terrain Topo',
@@ -126,7 +126,7 @@ export default function GisCommandCenter({
   const handleFlyToRegion = (regionKey) => {
     setActiveRegion(regionKey);
     const region = REGION_EXTENTS[regionKey];
-    if (region) {
+    if (region && Array.isArray(region.coords)) {
       setFlyCoords(region.coords);
     }
   };
@@ -149,19 +149,24 @@ export default function GisCommandCenter({
       };
       setMatchedSite(topSite);
 
-      const zoneLat = selectedZone.centroid_lat || 11.3530;
-      const zoneLng = selectedZone.centroid_lng || 76.7950;
-      const siteLat = topSite.lat || 11.298;
-      const siteLng = topSite.lng || 76.942;
+      const zoneLat = Number(selectedZone.centroid_lat || selectedZone.center_lat || 11.3530);
+      const zoneLng = Number(selectedZone.centroid_lng || selectedZone.center_lng || 76.7950);
+      const siteLat = Number(topSite.lat || 11.298);
+      const siteLng = Number(topSite.lng || 76.942);
 
-      const midLat = (zoneLat + siteLat) / 2 - 0.008;
-      const midLng = (zoneLng + siteLng) / 2 + 0.01;
+      if (!isNaN(zoneLat) && !isNaN(zoneLng) && !isNaN(siteLat) && !isNaN(siteLng)) {
+        const midLat = (zoneLat + siteLat) / 2 - 0.008;
+        const midLng = (zoneLng + siteLng) / 2 + 0.01;
 
-      setEvacRouteCoords([
-        [zoneLat, zoneLng],
-        [midLat, midLng],
-        [siteLat, siteLng]
-      ]);
+        setEvacRouteCoords([
+          [zoneLat, zoneLng],
+          [midLat, midLng],
+          [siteLat, siteLng]
+        ]);
+
+        // Pan to midpoint
+        setFlyCoords([(zoneLat + siteLat) / 2, (zoneLng + siteLng) / 2]);
+      }
 
       // Confetti celebration
       confetti({
@@ -169,9 +174,6 @@ export default function GisCommandCenter({
         spread: 60,
         origin: { y: 0.6 }
       });
-
-      // Pan to mid point
-      setFlyCoords([(zoneLat + siteLat) / 2, (zoneLng + siteLng) / 2]);
     } catch (e) {
       console.error("Match error:", e);
     } finally {
@@ -179,20 +181,68 @@ export default function GisCommandCenter({
     }
   };
 
-  // Helper for Polygon coordinates inversion
-  const getPolygonCoords = (geometry) => {
-    if (!geometry || !geometry.coordinates) return [];
+  // Robust Polygon coordinates extractor
+  const getValidPolygonPositions = (geometry, properties) => {
+    if (!geometry) return null;
     try {
-      if (geometry.type === 'Polygon') {
-        return geometry.coordinates[0].map(coord => [coord[1], coord[0]]);
-      } else if (geometry.type === 'MultiPolygon') {
-        return geometry.coordinates.map(poly => poly[0].map(coord => [coord[1], coord[0]]));
+      if (geometry.type === 'Polygon' && Array.isArray(geometry.coordinates) && geometry.coordinates.length > 0) {
+        const ring = geometry.coordinates[0];
+        if (Array.isArray(ring) && ring.length >= 3) {
+          const positions = ring
+            .map(coord => [Number(coord[1]), Number(coord[0])])
+            .filter(pos => !isNaN(pos[0]) && !isNaN(pos[1]));
+          return positions.length >= 3 ? positions : null;
+        }
+      } else if (geometry.type === 'MultiPolygon' && Array.isArray(geometry.coordinates)) {
+        for (const poly of geometry.coordinates) {
+          if (Array.isArray(poly) && poly.length > 0 && Array.isArray(poly[0]) && poly[0].length >= 3) {
+            const positions = poly[0]
+              .map(coord => [Number(coord[1]), Number(coord[0])])
+              .filter(pos => !isNaN(pos[0]) && !isNaN(pos[1]));
+            if (positions.length >= 3) return positions;
+          }
+        }
       }
     } catch (e) {
-      return [];
+      return null;
     }
-    return [];
+    return null;
   };
+
+  // Safe fallback coordinates for point
+  const getValidPointCoords = (feature) => {
+    try {
+      if (feature?.geometry?.coordinates && Array.isArray(feature.geometry.coordinates) && feature.geometry.coordinates.length >= 2) {
+        const lng = Number(feature.geometry.coordinates[0]);
+        const lat = Number(feature.geometry.coordinates[1]);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          return [lat, lng];
+        }
+      }
+      if (feature?.properties?.lat && feature?.properties?.lng) {
+        const lat = Number(feature.properties.lat);
+        const lng = Number(feature.properties.lng);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          return [lat, lng];
+        }
+      }
+      if (feature?.properties?.center_lat && feature?.properties?.center_lng) {
+        const lat = Number(feature.properties.center_lat);
+        const lng = Number(feature.properties.center_lng);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          return [lat, lng];
+        }
+      }
+    } catch (e) {
+      return null;
+    }
+    return null;
+  };
+
+  const redZoneFeatures = Array.isArray(layersData?.red_zones?.features) ? layersData.red_zones.features : [];
+  const deformFeatures = Array.isArray(layersData?.deformation_points?.features) ? layersData.deformation_points.features : [];
+  const siteFeatures = Array.isArray(layersData?.relocation_sites?.features) ? layersData.relocation_sites.features : [];
+  const villageFeatures = Array.isArray(layersData?.habitations?.features) ? layersData.habitations.features : [];
 
   return (
     <div className="relative w-full h-[calc(100vh-64px)] flex overflow-hidden bg-slate-100">
@@ -290,71 +340,110 @@ export default function GisCommandCenter({
           maxZoom={19}
         />
 
-        {/* Red Zones Polygons */}
-        {layerVisibility.redZones && layersData?.red_zones?.features?.map((feature, idx) => {
-          const coords = getPolygonCoords(feature.geometry);
-          if (!coords || coords.length === 0) return null;
-
-          const isSelected = selectedZone?.code === feature.properties.code;
-          const riskScore = feature.properties.risk_score || 85;
+        {/* Red Zones (Polygons or Point Buffer fallback) */}
+        {layerVisibility.redZones && redZoneFeatures.map((feature, idx) => {
+          const props = feature.properties || {};
+          const polyPositions = getValidPolygonPositions(feature.geometry, props);
+          const isSelected = selectedZone?.code === props.code;
+          const riskScore = props.risk_score || 85;
           const fillColor = riskScore >= 90 ? '#ef4444' : riskScore >= 75 ? '#f97316' : riskScore >= 50 ? '#eab308' : '#10b981';
 
+          if (polyPositions) {
+            return (
+              <Polygon
+                key={`poly-${props.code || idx}`}
+                positions={polyPositions}
+                pathOptions={{
+                  color: isSelected ? '#7f1d1d' : '#b91c1c',
+                  weight: isSelected ? 3.5 : 2,
+                  dashArray: isSelected ? '4 2' : '2 2',
+                  fillColor: fillColor,
+                  fillOpacity: isSelected ? 0.65 : 0.45
+                }}
+                eventHandlers={{
+                  click: () => {
+                    onSelectZone(props);
+                    const center = getValidPointCoords(feature);
+                    if (center) setFlyCoords(center);
+                  }
+                }}
+              >
+                <Popup>
+                  <div className="text-xs p-1">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <strong className="text-slate-950 font-bold text-sm">{props.name || props.code}</strong>
+                      <span className="bg-red-100 text-red-800 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full">
+                        {props.risk_level || 'CRITICAL'} ({props.risk_score || 91}/100)
+                      </span>
+                    </div>
+                    <div className="space-y-1 text-slate-700 font-medium">
+                      <div>Hazard: <strong className="text-red-700">{props.hazard_type || 'Landslide Creep'}</strong></div>
+                      <div>InSAR LOS Rate: <strong className="text-red-600">+{props.deformation_rate || 18.6} mm/yr</strong></div>
+                      <div>Population at Risk: <strong>{props.population?.toLocaleString() || '2,840'}</strong></div>
+                    </div>
+                    <button
+                      onClick={() => onSelectZone(props)}
+                      className="mt-2 w-full py-1.5 rounded-lg bg-red-600 text-white font-bold text-[11px] cursor-pointer hover:bg-red-700"
+                    >
+                      Select Zone Intelligence
+                    </button>
+                  </div>
+                </Popup>
+              </Polygon>
+            );
+          }
+
+          // Fallback if Point geometry
+          const pointCoords = getValidPointCoords(feature);
+          if (!pointCoords) return null;
+
           return (
-            <Polygon
-              key={`zone-${feature.properties.code || idx}`}
-              positions={coords}
+            <CircleMarker
+              key={`zone-pt-${props.code || idx}`}
+              center={pointCoords}
+              radius={isSelected ? 14 : 10}
               pathOptions={{
                 color: isSelected ? '#7f1d1d' : '#b91c1c',
-                weight: isSelected ? 3.5 : 2,
-                dashArray: isSelected ? '4 2' : '2 2',
+                weight: 3,
                 fillColor: fillColor,
-                fillOpacity: isSelected ? 0.65 : 0.45
+                fillOpacity: 0.7
               }}
               eventHandlers={{
                 click: () => {
-                  onSelectZone(feature.properties);
-                  if (feature.properties.centroid_lat && feature.properties.centroid_lng) {
-                    setFlyCoords([feature.properties.centroid_lat, feature.properties.centroid_lng]);
-                  }
+                  onSelectZone(props);
+                  setFlyCoords(pointCoords);
                 }
               }}
             >
               <Popup>
                 <div className="text-xs p-1">
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <strong className="text-slate-950 font-bold text-sm">{feature.properties.name || feature.properties.code}</strong>
-                    <span className="bg-red-100 text-red-800 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full">
-                      {feature.properties.risk_level} ({feature.properties.risk_score}/100)
-                    </span>
-                  </div>
-                  <div className="space-y-1 text-slate-700 font-medium">
-                    <div>Hazard: <strong className="text-red-700">{feature.properties.hazard_type || 'Landslide Creep'}</strong></div>
-                    <div>InSAR LOS Rate: <strong className="text-red-600">+{feature.properties.deformation_rate || 18.6} mm/yr</strong></div>
-                    <div>Population at Risk: <strong>{feature.properties.population?.toLocaleString() || '2,840'}</strong></div>
-                  </div>
+                  <div className="font-bold text-slate-950">{props.name || props.code}</div>
+                  <div className="text-red-600 font-bold">Score: {props.risk_score || 91}/100</div>
                   <button
-                    onClick={() => onSelectZone(feature.properties)}
-                    className="mt-2 w-full py-1.5 rounded-lg bg-red-600 text-white font-bold text-[11px] cursor-pointer hover:bg-red-700"
+                    onClick={() => onSelectZone(props)}
+                    className="mt-2 w-full py-1 rounded bg-red-600 text-white font-bold text-[11px]"
                   >
-                    Select Zone Intelligence
+                    Select Zone
                   </button>
                 </div>
               </Popup>
-            </Polygon>
+            </CircleMarker>
           );
         })}
 
         {/* PSInSAR Deformation Points */}
-        {layerVisibility.deformation && layersData?.deformation_points?.features?.map((pt, idx) => {
-          const lat = pt.geometry.coordinates[1];
-          const lng = pt.geometry.coordinates[0];
-          const vel = pt.properties.velocity_mm_yr || 15;
+        {layerVisibility.deformation && deformFeatures.map((pt, idx) => {
+          const coords = getValidPointCoords(pt);
+          if (!coords) return null;
+
+          const props = pt.properties || {};
+          const vel = props.velocity_mm_yr || 15;
           const color = vel > 15 ? '#dc2626' : vel > 8 ? '#f59e0b' : '#10b981';
 
           return (
             <CircleMarker
-              key={`ps-${pt.properties.point_code || idx}`}
-              center={[lat, lng]}
+              key={`ps-${props.point_code || idx}`}
+              center={coords}
               radius={vel > 15 ? 7 : 5}
               pathOptions={{
                 color: '#ffffff',
@@ -365,11 +454,11 @@ export default function GisCommandCenter({
             >
               <Popup>
                 <div className="text-xs p-1">
-                  <div className="font-bold text-slate-950">PSInSAR Scatterer: {pt.properties.point_code}</div>
+                  <div className="font-bold text-slate-950">PSInSAR Scatterer: {props.point_code}</div>
                   <div className="text-slate-700 mt-1">
                     <div>Velocity: <strong className="text-red-600">+{vel} mm/year</strong></div>
-                    <div>Coherence: <strong className="text-emerald-700">{pt.properties.coherence || 0.88}</strong></div>
-                    <div>Orbit: {pt.properties.orbit_track || 'Track 129 Descending'}</div>
+                    <div>Coherence: <strong className="text-emerald-700">{props.coherence || 0.88}</strong></div>
+                    <div>Orbit: {props.orbit_track || 'Track 129 Descending'}</div>
                   </div>
                 </div>
               </Popup>
@@ -378,14 +467,16 @@ export default function GisCommandCenter({
         })}
 
         {/* Relocation Sites */}
-        {layerVisibility.relocationSites && layersData?.relocation_sites?.features?.map((site, idx) => {
-          const lat = site.geometry.coordinates[1];
-          const lng = site.geometry.coordinates[0];
+        {layerVisibility.relocationSites && siteFeatures.map((site, idx) => {
+          const coords = getValidPointCoords(site);
+          if (!coords) return null;
+
+          const props = site.properties || {};
 
           return (
             <CircleMarker
-              key={`site-${site.properties.code || idx}`}
-              center={[lat, lng]}
+              key={`site-${props.code || idx}`}
+              center={coords}
               radius={8}
               pathOptions={{
                 color: '#ffffff',
@@ -396,11 +487,11 @@ export default function GisCommandCenter({
             >
               <Popup>
                 <div className="text-xs p-1">
-                  <div className="font-bold text-emerald-800 text-sm">Safe Site: {site.properties.name}</div>
+                  <div className="font-bold text-emerald-800 text-sm">Safe Site: {props.name}</div>
                   <div className="text-slate-700 mt-1">
-                    <div>Suitability: <strong className="text-emerald-700">{Math.round((site.properties.suitability_score || 0.94) * 100)}% Match</strong></div>
-                    <div>Safe Capacity: <strong>{site.properties.effective_capacity?.toLocaleString() || '3,200'}</strong></div>
-                    <div>Hospital Distance: {site.properties.distance_to_health_km || 1.8} km</div>
+                    <div>Suitability: <strong className="text-emerald-700">{Math.round((props.suitability_score || 0.94) * 100)}% Match</strong></div>
+                    <div>Safe Capacity: <strong>{props.effective_capacity?.toLocaleString() || '3,200'}</strong></div>
+                    <div>Hospital Distance: {props.distance_to_health_km || 1.8} km</div>
                   </div>
                 </div>
               </Popup>
@@ -409,14 +500,16 @@ export default function GisCommandCenter({
         })}
 
         {/* Habitations / Villages */}
-        {layerVisibility.villages && layersData?.habitations?.features?.map((vil, idx) => {
-          const lat = vil.geometry.coordinates[1];
-          const lng = vil.geometry.coordinates[0];
+        {layerVisibility.villages && villageFeatures.map((vil, idx) => {
+          const coords = getValidPointCoords(vil);
+          if (!coords) return null;
+
+          const props = vil.properties || {};
 
           return (
             <CircleMarker
-              key={`village-${vil.properties.name || idx}`}
-              center={[lat, lng]}
+              key={`village-${props.name || idx}`}
+              center={coords}
               radius={5}
               pathOptions={{
                 color: '#ffffff',
@@ -427,10 +520,10 @@ export default function GisCommandCenter({
             >
               <Popup>
                 <div className="text-xs p-1">
-                  <div className="font-bold text-blue-800">Habitation: {vil.properties.name}</div>
+                  <div className="font-bold text-blue-800">Habitation: {props.name}</div>
                   <div className="text-slate-700 mt-1">
-                    <div>Population: <strong>{vil.properties.population?.toLocaleString() || 1200}</strong></div>
-                    <div>Buildings: <strong>{vil.properties.buildings_count || 140} units</strong></div>
+                    <div>Population: <strong>{props.population?.toLocaleString() || 1200}</strong></div>
+                    <div>Buildings: <strong>{props.buildings_count || 140} units</strong></div>
                   </div>
                 </div>
               </Popup>
@@ -439,7 +532,7 @@ export default function GisCommandCenter({
         })}
 
         {/* Evacuation Route Polyline */}
-        {layerVisibility.evacuationRoute && evacRouteCoords && (
+        {layerVisibility.evacuationRoute && Array.isArray(evacRouteCoords) && evacRouteCoords.length >= 2 && (
           <Polyline
             positions={evacRouteCoords}
             pathOptions={{

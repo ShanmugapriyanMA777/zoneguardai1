@@ -1,5 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
-import * as maplibregl from 'maplibre-gl';
+import React, { useState, useEffect } from 'react';
+import { 
+  MapContainer, 
+  TileLayer, 
+  Polygon, 
+  CircleMarker, 
+  Polyline, 
+  Popup, 
+  useMap 
+} from 'react-leaflet';
 import { 
   Layers, 
   AlertTriangle, 
@@ -19,75 +27,66 @@ import {
   Navigation,
   CheckCircle2,
   Mountain,
-  Eye,
-  EyeOff,
-  RotateCcw,
-  Zap,
   Globe2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { api } from '../utils/api';
 
-// Pre-defined basemap styles for MapLibre GL
-const BASEMAP_STYLES = {
+// Map pan helper component with error resilience
+function MapPanTo({ coords, zoom }) {
+  const map = useMap();
+  useEffect(() => {
+    if (
+      coords && 
+      Array.isArray(coords) && 
+      coords.length === 2 && 
+      typeof coords[0] === 'number' && 
+      typeof coords[1] === 'number' && 
+      !isNaN(coords[0]) && 
+      !isNaN(coords[1])
+    ) {
+      try {
+        map.flyTo(coords, zoom || 12, { duration: 1.2 });
+      } catch (e) {
+        console.warn("MapPanTo flyTo warning:", e);
+      }
+    }
+  }, [coords, zoom, map]);
+  return null;
+}
+
+// Light-Mode Basemap Configurations (NO DARK MODE)
+const LIGHT_BASEMAPS = {
   terrain: {
-    version: 8,
-    sources: {
-      'raster-tiles': {
-        type: 'raster',
-        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'],
-        tileSize: 256,
-        attribution: '© Esri, USGS, OpenStreetMap'
-      }
-    },
-    layers: [{ id: 'topo-tiles', type: 'raster', source: 'raster-tiles', minzoom: 0, maxzoom: 19 }]
-  },
-  satellite: {
-    version: 8,
-    sources: {
-      'raster-tiles': {
-        type: 'raster',
-        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
-        tileSize: 256,
-        attribution: '© Esri, Maxar, Earthstar Geographics'
-      }
-    },
-    layers: [{ id: 'satellite-tiles', type: 'raster', source: 'raster-tiles', minzoom: 0, maxzoom: 19 }]
-  },
-  dark: {
-    version: 8,
-    sources: {
-      'raster-tiles': {
-        type: 'raster',
-        tiles: ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'],
-        tileSize: 256,
-        attribution: '© CartoDB, OpenStreetMap contributors'
-      }
-    },
-    layers: [{ id: 'dark-tiles', type: 'raster', source: 'raster-tiles', minzoom: 0, maxzoom: 19 }]
+    name: 'Terrain Topo',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+    attribution: '&copy; Esri, USGS, OpenStreetMap contributors'
   },
   osm: {
-    version: 8,
-    sources: {
-      'raster-tiles': {
-        type: 'raster',
-        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-        tileSize: 256,
-        attribution: '© OpenStreetMap contributors'
-      }
-    },
-    layers: [{ id: 'osm-tiles', type: 'raster', source: 'raster-tiles', minzoom: 0, maxzoom: 19 }]
+    name: 'Street Map',
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenStreetMap contributors'
+  },
+  satellite: {
+    name: 'Satellite EO',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: '&copy; Esri, Maxar, Earthstar Geographics'
+  },
+  light: {
+    name: 'Clean Light',
+    url: 'https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+    attribution: '&copy; CartoDB, OpenStreetMap contributors'
   }
 };
 
-// Pan-India Quick Region Extents [lng, lat, zoom]
+// Pan-India Quick Region Extents [lat, lng, zoom]
 const REGION_EXTENTS = {
-  nilgiris: { name: 'Nilgiris (Tamil Nadu)', center: [76.7950, 11.3530], zoom: 11.5, hazard: 'Landslide Creep & Toe Erosion' },
-  wayanad: { name: 'Wayanad (Kerala)', center: [76.1300, 11.6850], zoom: 11.5, hazard: 'Torrential Debris Flows' },
-  joshimath: { name: 'Joshimath (Uttarakhand)', center: [79.5630, 30.5560], zoom: 12.0, hazard: 'Ground Subsidence & Seepage' },
-  kangra: { name: 'Kangra-Shimla (Himachal)', center: [76.2700, 32.1000], zoom: 11.5, hazard: 'Seismic Zone V & Thrust Faults' },
-  puri: { name: 'Puri Coast (Odisha)', center: [85.8312, 19.8135], zoom: 11.5, hazard: 'Cyclone Surge & Flood Inundation' },
-  guwahati: { name: 'Brahmaputra (Assam)', center: [91.7362, 26.1445], zoom: 11.5, hazard: 'Riverine Flash Inundation' }
+  nilgiris: { name: 'Nilgiris (Tamil Nadu)', coords: [11.3530, 76.7950], zoom: 12, hazard: 'Landslide Creep & Toe Erosion' },
+  wayanad: { name: 'Wayanad (Kerala)', coords: [11.6850, 76.1300], zoom: 12, hazard: 'Torrential Debris Flows' },
+  joshimath: { name: 'Joshimath (Uttarakhand)', coords: [30.5560, 79.5630], zoom: 13, hazard: 'Ground Subsidence & Seepage' },
+  kangra: { name: 'Kangra-Shimla (Himachal)', coords: [32.1000, 76.2700], zoom: 12, hazard: 'Seismic Zone V & Thrust Faults' },
+  puri: { name: 'Puri Coast (Odisha)', coords: [19.8135, 85.8312], zoom: 12, hazard: 'Cyclone Surge & Flood Inundation' },
+  guwahati: { name: 'Brahmaputra (Assam)', coords: [26.1445, 91.7362], zoom: 12, hazard: 'Riverine Flash Inundation' }
 };
 
 export default function GisCommandCenter({ 
@@ -98,17 +97,10 @@ export default function GisCommandCenter({
   onOpenReport, 
   onOpenRelocationView 
 }) {
-  const mapContainerRef = useRef(null);
-  const mapRef = useRef(null);
-  const popupRef = useRef(null);
-
-  // Base map style state
-  const [baseMap, setBaseMap] = useState('terrain'); // 'terrain', 'satellite', 'dark', 'osm'
-  const [pitch3D, setPitch3D] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeRegion, setActiveRegion] = useState('nilgiris');
-
-  // Layer visibility state
+  // Basemap style - Default to Topographic Light Map (NO DARK MODE)
+  const [baseMap, setBaseMap] = useState('terrain'); // 'terrain', 'osm', 'satellite', 'light'
+  
+  // Layer visibility toggles
   const [layerVisibility, setLayerVisibility] = useState({
     redZones: true,
     deformation: true,
@@ -117,358 +109,25 @@ export default function GisCommandCenter({
     evacuationRoute: true
   });
 
+  // Active pan coordinates
+  const [flyCoords, setFlyCoords] = useState([11.3530, 76.7950]);
+  const [activeRegion, setActiveRegion] = useState('nilgiris');
+
   // Relocation match state
   const [matchedSite, setMatchedSite] = useState(null);
   const [loadingMatch, setLoadingMatch] = useState(false);
-  const [evacRouteGeoJson, setEvacRouteGeoJson] = useState(null);
+  const [evacRouteCoords, setEvacRouteCoords] = useState(null);
 
-  // Initialize MapLibre GL Map
-  useEffect(() => {
-    if (!mapContainerRef.current) return;
-
-    const map = new maplibregl.Map({
-      container: mapContainerRef.current,
-      style: BASEMAP_STYLES[baseMap] || BASEMAP_STYLES.terrain,
-      center: [76.7950, 11.3530],
-      zoom: 11.5,
-      pitch: pitch3D ? 45 : 0,
-      bearing: 0
-    });
-
-    mapRef.current = map;
-
-    // Navigation Controls
-    map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
-    map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }), 'bottom-left');
-
-    map.on('load', () => {
-      renderGeoJsonLayers(map);
-    });
-
-    // Cleanup
-    return () => {
-      map.remove();
-    };
-  }, []);
-
-  // Update basemap style when baseMap state changes
-  useEffect(() => {
-    if (!mapRef.current) return;
-    const map = mapRef.current;
-    
-    // Save center and zoom
-    const center = map.getCenter();
-    const zoom = map.getZoom();
-    const pitch = map.getPitch();
-    const bearing = map.getBearing();
-
-    map.setStyle(BASEMAP_STYLES[baseMap] || BASEMAP_STYLES.terrain);
-    
-    map.once('style.load', () => {
-      map.setCenter(center);
-      map.setZoom(zoom);
-      map.setPitch(pitch);
-      map.setBearing(bearing);
-      renderGeoJsonLayers(map);
-    });
-  }, [baseMap]);
-
-  // Update layers whenever layersData or visibility changes
-  useEffect(() => {
-    if (!mapRef.current || !mapRef.current.isStyleLoaded()) return;
-    renderGeoJsonLayers(mapRef.current);
-  }, [layersData, layerVisibility, evacRouteGeoJson]);
-
-  // Helper to render/update all MapLibre GL GeoJSON layers
-  const renderGeoJsonLayers = (map) => {
-    if (!map || !map.isStyleLoaded()) return;
-
-    // 1. Red Zones Layer
-    const redZonesData = layersData?.red_zones || { type: 'FeatureCollection', features: [] };
-    if (map.getSource('red-zones-src')) {
-      map.getSource('red-zones-src').setData(redZonesData);
-    } else {
-      map.addSource('red-zones-src', { type: 'geojson', data: redZonesData });
-      
-      map.addLayer({
-        id: 'red-zones-fill',
-        type: 'fill',
-        source: 'red-zones-src',
-        paint: {
-          'fill-color': [
-            'case',
-            ['>=', ['coalesce', ['get', 'risk_score'], 0], 90], '#ef4444',
-            ['>=', ['coalesce', ['get', 'risk_score'], 0], 75], '#f97316',
-            ['>=', ['coalesce', ['get', 'risk_score'], 0], 50], '#eab308',
-            '#10b981'
-          ],
-          'fill-opacity': 0.45
-        }
-      });
-
-      map.addLayer({
-        id: 'red-zones-line',
-        type: 'line',
-        source: 'red-zones-src',
-        paint: {
-          'line-color': '#b91c1c',
-          'line-width': 2.5,
-          'line-dasharray': [3, 2]
-        }
-      });
-
-      // Hover and Click on Red Zones
-      map.on('mouseenter', 'red-zones-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
-      map.on('mouseleave', 'red-zones-fill', () => { map.getCanvas().style.cursor = ''; });
-      map.on('click', 'red-zones-fill', (e) => {
-        if (e.features && e.features.length > 0) {
-          const props = e.features[0].properties;
-          onSelectZone(props);
-          showPopupForFeature(e.lngLat, props, 'zone');
-        }
-      });
-    }
-
-    if (map.getLayer('red-zones-fill')) {
-      map.setLayoutProperty('red-zones-fill', 'visibility', layerVisibility.redZones ? 'visible' : 'none');
-      map.setLayoutProperty('red-zones-line', 'visibility', layerVisibility.redZones ? 'visible' : 'none');
-    }
-
-    // 2. Deformation Points Layer
-    const deformData = layersData?.deformation_points || { type: 'FeatureCollection', features: [] };
-    if (map.getSource('deform-src')) {
-      map.getSource('deform-src').setData(deformData);
-    } else {
-      map.addSource('deform-src', { type: 'geojson', data: deformData });
-      
-      map.addLayer({
-        id: 'deform-glow',
-        type: 'circle',
-        source: 'deform-src',
-        paint: {
-          'circle-radius': 11,
-          'circle-color': '#ef4444',
-          'circle-opacity': 0.25
-        }
-      });
-
-      map.addLayer({
-        id: 'deform-circle',
-        type: 'circle',
-        source: 'deform-src',
-        paint: {
-          'circle-radius': 6,
-          'circle-color': [
-            'case',
-            ['>', ['coalesce', ['get', 'velocity_mm_yr'], 0], 15], '#dc2626',
-            ['>', ['coalesce', ['get', 'velocity_mm_yr'], 0], 8], '#f59e0b',
-            '#10b981'
-          ],
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#ffffff'
-        }
-      });
-
-      map.on('mouseenter', 'deform-circle', () => { map.getCanvas().style.cursor = 'pointer'; });
-      map.on('mouseleave', 'deform-circle', () => { map.getCanvas().style.cursor = ''; });
-      map.on('click', 'deform-circle', (e) => {
-        if (e.features && e.features.length > 0) {
-          const props = e.features[0].properties;
-          showPopupForFeature(e.lngLat, props, 'deformation');
-        }
-      });
-    }
-
-    if (map.getLayer('deform-circle')) {
-      map.setLayoutProperty('deform-circle', 'visibility', layerVisibility.deformation ? 'visible' : 'none');
-      map.setLayoutProperty('deform-glow', 'visibility', layerVisibility.deformation ? 'visible' : 'none');
-    }
-
-    // 3. Relocation Sites Layer
-    const relocationData = layersData?.relocation_sites || { type: 'FeatureCollection', features: [] };
-    if (map.getSource('relocation-src')) {
-      map.getSource('relocation-src').setData(relocationData);
-    } else {
-      map.addSource('relocation-src', { type: 'geojson', data: relocationData });
-
-      map.addLayer({
-        id: 'relocation-circle',
-        type: 'circle',
-        source: 'relocation-src',
-        paint: {
-          'circle-radius': 8,
-          'circle-color': '#059669',
-          'circle-stroke-width': 2.5,
-          'circle-stroke-color': '#ffffff'
-        }
-      });
-
-      map.on('mouseenter', 'relocation-circle', () => { map.getCanvas().style.cursor = 'pointer'; });
-      map.on('mouseleave', 'relocation-circle', () => { map.getCanvas().style.cursor = ''; });
-      map.on('click', 'relocation-circle', (e) => {
-        if (e.features && e.features.length > 0) {
-          const props = e.features[0].properties;
-          showPopupForFeature(e.lngLat, props, 'relocation');
-        }
-      });
-    }
-
-    if (map.getLayer('relocation-circle')) {
-      map.setLayoutProperty('relocation-circle', 'visibility', layerVisibility.relocationSites ? 'visible' : 'none');
-    }
-
-    // 4. Habitations / Villages Layer
-    const villagesData = layersData?.habitations || { type: 'FeatureCollection', features: [] };
-    if (map.getSource('villages-src')) {
-      map.getSource('villages-src').setData(villagesData);
-    } else {
-      map.addSource('villages-src', { type: 'geojson', data: villagesData });
-
-      map.addLayer({
-        id: 'villages-circle',
-        type: 'circle',
-        source: 'villages-src',
-        paint: {
-          'circle-radius': 5,
-          'circle-color': '#2563eb',
-          'circle-stroke-width': 1.5,
-          'circle-stroke-color': '#ffffff'
-        }
-      });
-
-      map.on('mouseenter', 'villages-circle', () => { map.getCanvas().style.cursor = 'pointer'; });
-      map.on('mouseleave', 'villages-circle', () => { map.getCanvas().style.cursor = ''; });
-      map.on('click', 'villages-circle', (e) => {
-        if (e.features && e.features.length > 0) {
-          const props = e.features[0].properties;
-          showPopupForFeature(e.lngLat, props, 'village');
-        }
-      });
-    }
-
-    if (map.getLayer('villages-circle')) {
-      map.setLayoutProperty('villages-circle', 'visibility', layerVisibility.villages ? 'visible' : 'none');
-    }
-
-    // 5. Evacuation Route Polyline Layer
-    const routeData = evacRouteGeoJson || { type: 'FeatureCollection', features: [] };
-    if (map.getSource('evac-route-src')) {
-      map.getSource('evac-route-src').setData(routeData);
-    } else {
-      map.addSource('evac-route-src', { type: 'geojson', data: routeData });
-
-      map.addLayer({
-        id: 'evac-route-glow',
-        type: 'line',
-        source: 'evac-route-src',
-        paint: {
-          'line-color': '#10b981',
-          'line-width': 8,
-          'line-opacity': 0.35
-        }
-      });
-
-      map.addLayer({
-        id: 'evac-route-line',
-        type: 'line',
-        source: 'evac-route-src',
-        paint: {
-          'line-color': '#059669',
-          'line-width': 4,
-          'line-dasharray': [2, 2]
-        }
-      });
-    }
-
-    if (map.getLayer('evac-route-line')) {
-      map.setLayoutProperty('evac-route-line', 'visibility', (layerVisibility.evacuationRoute && evacRouteGeoJson) ? 'visible' : 'none');
-      map.setLayoutProperty('evac-route-glow', 'visibility', (layerVisibility.evacuationRoute && evacRouteGeoJson) ? 'visible' : 'none');
-    }
-  };
-
-  // Popup Display Helper
-  const showPopupForFeature = (lngLat, props, type) => {
-    if (popupRef.current) popupRef.current.remove();
-
-    let contentHtml = '';
-    if (type === 'zone') {
-      contentHtml = `
-        <div style="font-family: 'Inter', sans-serif; min-width: 200px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-            <strong style="font-size: 13px; color: #0f172a;">${props.name || props.code}</strong>
-            <span style="background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 9999px; font-size: 10px; font-weight: 800;">
-              ${props.risk_level || 'CRITICAL'} (${props.risk_score || 91}/100)
-            </span>
-          </div>
-          <div style="font-size: 11px; color: #475569; margin-bottom: 6px;">
-            <div>Hazard: <strong style="color: #0f172a;">${props.hazard_type || 'Landslide Creep'}</strong></div>
-            <div>InSAR LOS Velocity: <strong style="color: #dc2626;">+${props.deformation_rate || 18.6} mm/yr</strong></div>
-            <div>Population at Risk: <strong style="color: #0f172a;">${props.population ? props.population.toLocaleString() : '2,840'}</strong></div>
-          </div>
-          <div style="font-size: 10px; font-weight: bold; color: #059669; border-top: 1px solid #e2e8f0; padding-top: 4px;">
-            Action: ${props.recommended_action || 'Priority Evacuation Required'}
-          </div>
-        </div>
-      `;
-    } else if (type === 'deformation') {
-      contentHtml = `
-        <div style="font-family: 'Inter', sans-serif;">
-          <div style="font-weight: 800; font-size: 12px; color: #0f172a;">PSInSAR Scatterer: ${props.point_code || 'PS-014-01'}</div>
-          <div style="font-size: 11px; color: #475569; margin-top: 3px;">
-            <div>Velocity: <strong style="color: #dc2626;">+${props.velocity_mm_yr || 18.6} mm/year</strong></div>
-            <div>Phase Coherence: <strong style="color: #059669;">${props.coherence || 0.88} (High Quality)</strong></div>
-            <div>Orbit Track: <strong>${props.orbit_track || 'Track 129 Descending'}</strong></div>
-          </div>
-        </div>
-      `;
-    } else if (type === 'relocation') {
-      contentHtml = `
-        <div style="font-family: 'Inter', sans-serif;">
-          <div style="font-weight: 800; font-size: 12px; color: #059669;">Safe Relocation Site: ${props.name || props.code}</div>
-          <div style="font-size: 11px; color: #475569; margin-top: 3px;">
-            <div>AHP Suitability Score: <strong style="color: #059669;">${Math.round((props.suitability_score || 0.94) * 100)}% Match</strong></div>
-            <div>Safe Habitable Capacity: <strong style="color: #0f172a;">${props.effective_capacity?.toLocaleString() || '3,200'} citizens</strong></div>
-            <div>Distance to Health Center: <strong>${props.distance_to_health_km || 1.8} km</strong></div>
-          </div>
-        </div>
-      `;
-    } else if (type === 'village') {
-      contentHtml = `
-        <div style="font-family: 'Inter', sans-serif;">
-          <div style="font-weight: 800; font-size: 12px; color: #1d4ed8;">Habitation / Ward: ${props.name}</div>
-          <div style="font-size: 11px; color: #475569; margin-top: 3px;">
-            <div>Population: <strong>${props.population?.toLocaleString() || 1200}</strong></div>
-            <div>Building Count: <strong>${props.buildings_count || 140} units</strong></div>
-          </div>
-        </div>
-      `;
-    }
-
-    popupRef.current = new maplibregl.Popup({ offset: 12, closeButton: false })
-      .setLngLat(lngLat)
-      .setHTML(contentHtml)
-      .addTo(mapRef.current);
-  };
-
-  // Toggle 3D Perspective Pitch
-  const handleToggle3D = () => {
-    if (!mapRef.current) return;
-    const newPitch = !pitch3D;
-    setPitch3D(newPitch);
-    mapRef.current.easeTo({ pitch: newPitch ? 48 : 0, duration: 800 });
+  const toggleLayer = (layerKey) => {
+    setLayerVisibility(prev => ({ ...prev, [layerKey]: !prev[layerKey] }));
   };
 
   // Fly to selected region
   const handleFlyToRegion = (regionKey) => {
     setActiveRegion(regionKey);
     const region = REGION_EXTENTS[regionKey];
-    if (region && mapRef.current) {
-      mapRef.current.flyTo({
-        center: region.center,
-        zoom: region.zoom,
-        duration: 1400,
-        essential: true
-      });
+    if (region) {
+      setFlyCoords(region.coords);
     }
   };
 
@@ -490,35 +149,19 @@ export default function GisCommandCenter({
       };
       setMatchedSite(topSite);
 
-      // Create Route GeoJSON
-      const zoneLng = selectedZone.centroid_lng || 76.7950;
       const zoneLat = selectedZone.centroid_lat || 11.3530;
-      const siteLng = topSite.lng || 76.942;
+      const zoneLng = selectedZone.centroid_lng || 76.7950;
       const siteLat = topSite.lat || 11.298;
+      const siteLng = topSite.lng || 76.942;
 
-      const midLng = (zoneLng + siteLng) / 2 + 0.01;
       const midLat = (zoneLat + siteLat) / 2 - 0.008;
+      const midLng = (zoneLng + siteLng) / 2 + 0.01;
 
-      const routeFeature = {
-        type: 'FeatureCollection',
-        features: [{
-          type: 'Feature',
-          geometry: {
-            type: 'LineString',
-            coordinates: [
-              [zoneLng, zoneLat],
-              [midLng, midLat],
-              [siteLng, siteLat]
-            ]
-          },
-          properties: {
-            distance_km: topSite.distance_km,
-            transit_time_mins: topSite.transit_time_mins
-          }
-        }]
-      };
-
-      setEvacRouteGeoJson(routeFeature);
+      setEvacRouteCoords([
+        [zoneLat, zoneLng],
+        [midLat, midLng],
+        [siteLat, siteLng]
+      ]);
 
       // Confetti celebration
       confetti({
@@ -527,13 +170,8 @@ export default function GisCommandCenter({
         origin: { y: 0.6 }
       });
 
-      // Fit map bounds to encompass zone and site
-      if (mapRef.current) {
-        const bounds = new maplibregl.LngLatBounds()
-          .extend([zoneLng, zoneLat])
-          .extend([siteLng, siteLat]);
-        mapRef.current.fitBounds(bounds, { padding: 90, duration: 1200 });
-      }
+      // Pan to mid point
+      setFlyCoords([(zoneLat + siteLat) / 2, (zoneLng + siteLng) / 2]);
     } catch (e) {
       console.error("Match error:", e);
     } finally {
@@ -541,10 +179,25 @@ export default function GisCommandCenter({
     }
   };
 
+  // Helper for Polygon coordinates inversion
+  const getPolygonCoords = (geometry) => {
+    if (!geometry || !geometry.coordinates) return [];
+    try {
+      if (geometry.type === 'Polygon') {
+        return geometry.coordinates[0].map(coord => [coord[1], coord[0]]);
+      } else if (geometry.type === 'MultiPolygon') {
+        return geometry.coordinates.map(poly => poly[0].map(coord => [coord[1], coord[0]]));
+      }
+    } catch (e) {
+      return [];
+    }
+    return [];
+  };
+
   return (
     <div className="relative w-full h-[calc(100vh-64px)] flex overflow-hidden bg-slate-100">
       {/* Top Floating Control Bar */}
-      <div className="absolute top-4 left-4 z-20 flex flex-wrap items-center gap-2 bg-white/95 backdrop-blur-md p-2 rounded-2xl border-2 border-slate-200 shadow-xl max-w-[calc(100vw-360px)]">
+      <div className="absolute top-4 left-4 z-[1000] flex flex-wrap items-center gap-2 bg-white/95 backdrop-blur-md p-2 rounded-2xl border-2 border-slate-200 shadow-xl max-w-[calc(100vw-420px)]">
         {/* Quick Region Selector */}
         <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
           <Globe2 className="w-3.5 h-3.5 text-slate-700 ml-1" />
@@ -563,46 +216,28 @@ export default function GisCommandCenter({
           ))}
         </div>
 
-        {/* Basemap Switcher */}
+        {/* Light Basemap Switcher (NO DARK MODE) */}
         <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
           <Layers className="w-3.5 h-3.5 text-slate-700 ml-1" />
-          {[
-            { id: 'terrain', label: 'Terrain' },
-            { id: 'satellite', label: 'Satellite' },
-            { id: 'dark', label: 'Dark' },
-            { id: 'osm', label: 'Street' }
-          ].map(bm => (
+          {Object.entries(LIGHT_BASEMAPS).map(([key, bm]) => (
             <button
-              key={bm.id}
-              onClick={() => setBaseMap(bm.id)}
+              key={key}
+              onClick={() => setBaseMap(key)}
               className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                baseMap === bm.id 
+                baseMap === key 
                   ? 'bg-slate-900 text-white shadow-sm' 
                   : 'text-slate-700 hover:text-slate-950 hover:bg-white'
               }`}
             >
-              {bm.label}
+              {bm.name}
             </button>
           ))}
         </div>
 
-        {/* 3D Terrain Pitch Toggle */}
-        <button
-          onClick={handleToggle3D}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer border ${
-            pitch3D 
-              ? 'bg-amber-500 text-white border-amber-600 shadow-md' 
-              : 'bg-white text-slate-800 border-slate-300 hover:bg-slate-50'
-          }`}
-        >
-          <Mountain className="w-3.5 h-3.5" />
-          <span>{pitch3D ? '3D Active (48°)' : '3D View'}</span>
-        </button>
-
         {/* Layer Visibility Pills */}
         <div className="flex items-center gap-1">
           <button
-            onClick={() => setLayerVisibility(p => ({ ...p, redZones: !p.redZones }))}
+            onClick={() => toggleLayer('redZones')}
             className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1 border transition-all cursor-pointer ${
               layerVisibility.redZones 
                 ? 'bg-red-50 text-red-800 border-red-300' 
@@ -614,7 +249,7 @@ export default function GisCommandCenter({
           </button>
 
           <button
-            onClick={() => setLayerVisibility(p => ({ ...p, deformation: !p.deformation }))}
+            onClick={() => toggleLayer('deformation')}
             className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1 border transition-all cursor-pointer ${
               layerVisibility.deformation 
                 ? 'bg-amber-50 text-amber-800 border-amber-300' 
@@ -626,7 +261,7 @@ export default function GisCommandCenter({
           </button>
 
           <button
-            onClick={() => setLayerVisibility(p => ({ ...p, relocationSites: !p.relocationSites }))}
+            onClick={() => toggleLayer('relocationSites')}
             className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1 border transition-all cursor-pointer ${
               layerVisibility.relocationSites 
                 ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
@@ -639,19 +274,194 @@ export default function GisCommandCenter({
         </div>
       </div>
 
-      {/* MapLibre GL WebGL Map Canvas Container */}
-      <div ref={mapContainerRef} className="w-full h-full" />
+      {/* Leaflet Map Canvas */}
+      <MapContainer
+        center={flyCoords}
+        zoom={12}
+        className="w-full h-full"
+        zoomControl={true}
+      >
+        <MapPanTo coords={flyCoords} zoom={12} />
+
+        {/* Selected Light Basemap */}
+        <TileLayer
+          url={LIGHT_BASEMAPS[baseMap]?.url || LIGHT_BASEMAPS.terrain.url}
+          attribution={LIGHT_BASEMAPS[baseMap]?.attribution || LIGHT_BASEMAPS.terrain.attribution}
+          maxZoom={19}
+        />
+
+        {/* Red Zones Polygons */}
+        {layerVisibility.redZones && layersData?.red_zones?.features?.map((feature, idx) => {
+          const coords = getPolygonCoords(feature.geometry);
+          if (!coords || coords.length === 0) return null;
+
+          const isSelected = selectedZone?.code === feature.properties.code;
+          const riskScore = feature.properties.risk_score || 85;
+          const fillColor = riskScore >= 90 ? '#ef4444' : riskScore >= 75 ? '#f97316' : riskScore >= 50 ? '#eab308' : '#10b981';
+
+          return (
+            <Polygon
+              key={`zone-${feature.properties.code || idx}`}
+              positions={coords}
+              pathOptions={{
+                color: isSelected ? '#7f1d1d' : '#b91c1c',
+                weight: isSelected ? 3.5 : 2,
+                dashArray: isSelected ? '4 2' : '2 2',
+                fillColor: fillColor,
+                fillOpacity: isSelected ? 0.65 : 0.45
+              }}
+              eventHandlers={{
+                click: () => {
+                  onSelectZone(feature.properties);
+                  if (feature.properties.centroid_lat && feature.properties.centroid_lng) {
+                    setFlyCoords([feature.properties.centroid_lat, feature.properties.centroid_lng]);
+                  }
+                }
+              }}
+            >
+              <Popup>
+                <div className="text-xs p-1">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <strong className="text-slate-950 font-bold text-sm">{feature.properties.name || feature.properties.code}</strong>
+                    <span className="bg-red-100 text-red-800 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full">
+                      {feature.properties.risk_level} ({feature.properties.risk_score}/100)
+                    </span>
+                  </div>
+                  <div className="space-y-1 text-slate-700 font-medium">
+                    <div>Hazard: <strong className="text-red-700">{feature.properties.hazard_type || 'Landslide Creep'}</strong></div>
+                    <div>InSAR LOS Rate: <strong className="text-red-600">+{feature.properties.deformation_rate || 18.6} mm/yr</strong></div>
+                    <div>Population at Risk: <strong>{feature.properties.population?.toLocaleString() || '2,840'}</strong></div>
+                  </div>
+                  <button
+                    onClick={() => onSelectZone(feature.properties)}
+                    className="mt-2 w-full py-1.5 rounded-lg bg-red-600 text-white font-bold text-[11px] cursor-pointer hover:bg-red-700"
+                  >
+                    Select Zone Intelligence
+                  </button>
+                </div>
+              </Popup>
+            </Polygon>
+          );
+        })}
+
+        {/* PSInSAR Deformation Points */}
+        {layerVisibility.deformation && layersData?.deformation_points?.features?.map((pt, idx) => {
+          const lat = pt.geometry.coordinates[1];
+          const lng = pt.geometry.coordinates[0];
+          const vel = pt.properties.velocity_mm_yr || 15;
+          const color = vel > 15 ? '#dc2626' : vel > 8 ? '#f59e0b' : '#10b981';
+
+          return (
+            <CircleMarker
+              key={`ps-${pt.properties.point_code || idx}`}
+              center={[lat, lng]}
+              radius={vel > 15 ? 7 : 5}
+              pathOptions={{
+                color: '#ffffff',
+                weight: 2,
+                fillColor: color,
+                fillOpacity: 0.9
+              }}
+            >
+              <Popup>
+                <div className="text-xs p-1">
+                  <div className="font-bold text-slate-950">PSInSAR Scatterer: {pt.properties.point_code}</div>
+                  <div className="text-slate-700 mt-1">
+                    <div>Velocity: <strong className="text-red-600">+{vel} mm/year</strong></div>
+                    <div>Coherence: <strong className="text-emerald-700">{pt.properties.coherence || 0.88}</strong></div>
+                    <div>Orbit: {pt.properties.orbit_track || 'Track 129 Descending'}</div>
+                  </div>
+                </div>
+              </Popup>
+            </CircleMarker>
+          );
+        })}
+
+        {/* Relocation Sites */}
+        {layerVisibility.relocationSites && layersData?.relocation_sites?.features?.map((site, idx) => {
+          const lat = site.geometry.coordinates[1];
+          const lng = site.geometry.coordinates[0];
+
+          return (
+            <CircleMarker
+              key={`site-${site.properties.code || idx}`}
+              center={[lat, lng]}
+              radius={8}
+              pathOptions={{
+                color: '#ffffff',
+                weight: 2.5,
+                fillColor: '#059669',
+                fillOpacity: 0.9
+              }}
+            >
+              <Popup>
+                <div className="text-xs p-1">
+                  <div className="font-bold text-emerald-800 text-sm">Safe Site: {site.properties.name}</div>
+                  <div className="text-slate-700 mt-1">
+                    <div>Suitability: <strong className="text-emerald-700">{Math.round((site.properties.suitability_score || 0.94) * 100)}% Match</strong></div>
+                    <div>Safe Capacity: <strong>{site.properties.effective_capacity?.toLocaleString() || '3,200'}</strong></div>
+                    <div>Hospital Distance: {site.properties.distance_to_health_km || 1.8} km</div>
+                  </div>
+                </div>
+              </Popup>
+            </CircleMarker>
+          );
+        })}
+
+        {/* Habitations / Villages */}
+        {layerVisibility.villages && layersData?.habitations?.features?.map((vil, idx) => {
+          const lat = vil.geometry.coordinates[1];
+          const lng = vil.geometry.coordinates[0];
+
+          return (
+            <CircleMarker
+              key={`village-${vil.properties.name || idx}`}
+              center={[lat, lng]}
+              radius={5}
+              pathOptions={{
+                color: '#ffffff',
+                weight: 1.5,
+                fillColor: '#2563eb',
+                fillOpacity: 0.85
+              }}
+            >
+              <Popup>
+                <div className="text-xs p-1">
+                  <div className="font-bold text-blue-800">Habitation: {vil.properties.name}</div>
+                  <div className="text-slate-700 mt-1">
+                    <div>Population: <strong>{vil.properties.population?.toLocaleString() || 1200}</strong></div>
+                    <div>Buildings: <strong>{vil.properties.buildings_count || 140} units</strong></div>
+                  </div>
+                </div>
+              </Popup>
+            </CircleMarker>
+          );
+        })}
+
+        {/* Evacuation Route Polyline */}
+        {layerVisibility.evacuationRoute && evacRouteCoords && (
+          <Polyline
+            positions={evacRouteCoords}
+            pathOptions={{
+              color: '#059669',
+              weight: 4.5,
+              dashArray: '8 6',
+              opacity: 0.95
+            }}
+          />
+        )}
+      </MapContainer>
 
       {/* Right-Side Zone Intelligence & Relocation Drawer */}
-      <div className="absolute top-4 right-4 bottom-4 w-96 z-20 flex flex-col bg-white/95 backdrop-blur-md border-2 border-slate-200 rounded-3xl shadow-2xl overflow-hidden">
+      <div className="absolute top-4 right-4 bottom-4 w-96 z-[1000] flex flex-col bg-white/95 backdrop-blur-md border-2 border-slate-200 rounded-3xl shadow-2xl overflow-hidden">
         {/* Drawer Header */}
         <div className="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShieldAlert className="w-5 h-5 text-red-600" />
             <h3 className="text-sm font-black text-slate-950 font-heading">Zone Decision Intelligence</h3>
           </div>
-          <span className="text-[10px] font-mono font-bold bg-red-100 text-red-800 border border-red-300 px-2 py-0.5 rounded-full">
-            MapLibre GL Active
+          <span className="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-full">
+            Light Mode Active
           </span>
         </div>
 
@@ -758,7 +568,7 @@ export default function GisCommandCenter({
           ) : (
             <div className="p-8 text-center text-slate-500 space-y-3">
               <Crosshair className="w-8 h-8 text-slate-400 mx-auto" />
-              <p className="font-medium">Click on any red hazard zone or PS scatterer on the MapLibre map to view geomorphic intelligence.</p>
+              <p className="font-medium">Click on any red hazard zone or PS scatterer on the map to view geomorphic intelligence.</p>
             </div>
           )}
         </div>

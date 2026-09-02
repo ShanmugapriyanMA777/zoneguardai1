@@ -23,7 +23,7 @@ ZoneGuard AI is an enterprise-grade **National Multi-Hazard Early Warning & Pre-
 
 ---
 
-### 2. 🚨 Pan-India Multi-Hazard Red-Zone & Precaution Matrix
+### 2. Multi-Hazard Red-Zone & Precaution Matrix
 Direct monitoring across all primary Indian disaster corridors:
 * **Tamil Nadu (Nilgiris Ghats & Coast)**: Landslide creep (Coonoor/Kotagiri) and coastal cyclone storm surge.
 * **Uttarakhand (Himalayan Belt)**: High-altitude ground subsidence (Joshimath Sunil Ward) and flash floods (Chamoli/Kedarnath).
@@ -73,7 +73,7 @@ source venv/bin/activate   # On Linux/macOS
 
 pip install -r requirements.txt
 
-# Seed Database with Pan-India Multi-Hazard Data
+# Seed Database with Multi-Hazard Data
 python scripts/seed_demo_data.py
 
 # Start Server

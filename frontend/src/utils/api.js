@@ -29,6 +29,14 @@ export const api = {
     const q = new URLSearchParams(params).toString();
     return fetchApi(`/zones${q ? `?${q}` : ''}`);
   },
+  getTamilNadu3dGis: (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return fetchApi(`/zones/tamilnadu-3d${q ? `?${q}` : ''}`);
+  },
+  evaluateCustomCriteria: (data) => fetchApi('/zones/evaluate-criteria', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
   getZone: (code) => fetchApi(`/zones/${code}`),
   getZoneShap: (code) => fetchApi(`/zones/${code}/shap`),
   recalculateZone: (code, data) => fetchApi(`/zones/${code}/recalculate`, {

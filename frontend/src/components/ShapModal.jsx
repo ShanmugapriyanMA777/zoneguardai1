@@ -16,11 +16,11 @@ export default function ShapModal({ zone, shapData, onClose, onFindRelocation })
   if (!shapData && !zone) return null;
 
   const data = shapData || {
-    zone_code: zone?.code || 'ZONE-RZ-014',
-    risk_score: zone?.risk_score || 91.0,
+    zone_code: zone?.code || 'ZONE-TN-001',
+    risk_score: zone?.risk_score || 99.6,
     risk_level: zone?.risk_level || 'CRITICAL',
     base_district_risk: 32.0,
-    narrative_explanation: `Zone ${zone?.code || 'ZONE-RZ-014'} is classified as CRITICAL (Overall Risk ${zone?.risk_score || 91}/100) primarily driven by significant ground deformation (+${zone?.deformation_rate || 18.6} mm/yr), steep terrain slope (${zone?.slope || 34.2}°), and high monsoon rainfall exposure (${zone?.rainfall || 1480} mm). Satellite interferometry highlights active surface displacement, compounding structural vulnerability for habitations within this red-zone perimeter.`,
+    narrative_explanation: `Zone ${zone?.code || 'ZONE-TN-001'} is classified as CRITICAL (Overall Risk ${zone?.risk_score || 99.6}/100) primarily driven by significant ground deformation (+${zone?.deformation_rate || 18.6} mm/yr), steep terrain slope (${zone?.slope || 34.2}°), and high monsoon rainfall exposure (${zone?.rainfall || 1480} mm). Satellite interferometry highlights active surface displacement, compounding structural vulnerability for habitations within this red-zone perimeter.`,
     features_breakdown: [
       { feature: "Ground Deformation (PSInSAR)", value: `+${zone?.deformation_rate || 18.6} mm/year`, percentage: 32, impact: "CRITICAL RISK ACCELERATOR", direction: "positive" },
       { feature: "Terrain Slope Angle", value: `${zone?.slope || 34.2}°`, percentage: 25, impact: "STEEP INSTABILITY", direction: "positive" },

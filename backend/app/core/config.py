@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     REAL_DATA_MODE: bool = os.getenv("REAL_DATA_MODE", "false").lower() in ("true", "1", "t")
     
     # Database URL (defaults to SQLite, supports PostGIS via DATABASE_URL)
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./zoneguard.db")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "")
     
     # Copernicus Data Space Ecosystem (CDSE) Settings
     CDSE_API_URL: str = os.getenv("CDSE_API_URL", "https://catalogue.dataspace.copernicus.eu/odata/v1")
@@ -26,6 +26,14 @@ class Settings(BaseSettings):
     DEFAULT_DISTRICT: str = "Nilgiris-Western Ghats Hazard Corridor (Tamil Nadu)"
     DISTRICT_CENTER_LAT: float = 11.3530
     DISTRICT_CENTER_LNG: float = 76.7950
+
+    def __init__(self, **values):
+        super().__init__(**values)
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+        # Check if root zoneguard.db or backend/zoneguard.db
+        root_db = os.path.join(base_dir, "zoneguard.db").replace("\\", "/")
+        if not self.DATABASE_URL or self.DATABASE_URL == "sqlite:///./zoneguard.db" or self.DATABASE_URL.startswith("sqlite:///./"):
+            self.DATABASE_URL = f"sqlite:///{root_db}"
 
     class Config:
         case_sensitive = True

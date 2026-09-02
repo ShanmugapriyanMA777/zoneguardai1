@@ -1,0 +1,19 @@
+{
+  "name": "ZoneGuard AI — Field Officer Mobile App",
+  "short_name": "FieldOps",
+  "description": "National Multi-Hazard Ground-Truth & Relocation Verification Mobile App for DDMA/SDMA Field Officers",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#059669",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/app-icon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["government", "productivity", "utilities"]
+}

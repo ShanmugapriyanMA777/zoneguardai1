@@ -44,7 +44,7 @@ def reset_seed_data():
         seed_all()
         return {
             "status": "SUCCESS",
-            "message": "Database reset and re-seeded successfully with multi-hazard Pan-India dataset."
+            "message": "Database reset and re-seeded successfully with multi-hazard dataset."
         }
     except Exception as e:
         try:

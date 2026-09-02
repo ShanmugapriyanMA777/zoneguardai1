@@ -52,15 +52,15 @@ def get_woe_table():
 @router.get("/xai/sample")
 def get_sample_xai():
     sample_zone = {
-        "code": "ZONE-RZ-014",
-        "name": "Joshimath Upper Ward Subsidence Sector",
+        "code": "ZONE-TN-001",
+        "name": "Coonoor Marapallam Ghats Subsidence Sector (Nilgiris, TN)",
         "risk_level": "CRITICAL",
-        "risk_score": 91.0,
+        "risk_score": 99.6,
         "slope": 34.2,
         "deformation_rate": 18.6,
         "rainfall": 1480.0,
         "distance_to_river": 320.0,
-        "land_use": "Barren Scree Colluvium",
-        "seismic_intensity": 8.5
+        "land_use": "Fractured Mountain Terrace",
+        "seismic_intensity": 8.0
     }
     return shap_engine.explain_zone(sample_zone)

@@ -53,7 +53,7 @@ def get_point_details(point_code: str, db: Session = Depends(get_db)):
             status="Accelerating",
             coherence=0.88,
             orbit_track="Track 129 Descending",
-            zone_code="ZONE-RZ-014",
+            zone_code="ZONE-TN-001",
             last_updated="2026-08-28"
         )
         

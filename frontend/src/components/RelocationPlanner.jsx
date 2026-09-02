@@ -157,7 +157,7 @@ export default function RelocationPlanner({ onSelectSiteForReport }) {
             </div>
           </div>
           <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-400 text-xs font-black">
-            ✅ CONSISTENT
+            CONSISTENT
           </span>
         </div>
       </div>
@@ -282,7 +282,7 @@ export default function RelocationPlanner({ onSelectSiteForReport }) {
                   >
                     <td className="py-3.5 px-3 font-mono font-black text-sm">
                       {index === 0 ? (
-                        <span className="text-amber-600 flex items-center gap-1 font-black">#1 🏆</span>
+                        <span className="text-amber-600 flex items-center gap-1 font-black">#1 Rank</span>
                       ) : (
                         <span className="text-slate-500">#{index + 1}</span>
                       )}

@@ -18,14 +18,18 @@ async function fetchApi(endpoint, options = {}) {
     }
     return await res.json();
   } catch (err) {
-    console.warn(`[Field Portal API] Request to ${endpoint} failed:`, err.message);
+    console.warn(`[Field Officer Portal API] Request to ${endpoint} failed:`, err.message);
     throw err;
   }
 }
 
 export const api = {
   checkBackendHealth: () => fetchApi('/dashboard/stats'),
+  getStats: () => fetchApi('/dashboard/stats'),
   getZones: () => fetchApi('/zones'),
+  getTamilNadu3dGis: () => fetchApi('/zones/tamilnadu-3d'),
+  getLayers: () => fetchApi('/hazards/layers'),
+  getRelocationSites: () => fetchApi('/relocation/sites'),
   getAlerts: () => fetchApi('/alerts'),
   getFieldSurveys: () => fetchApi('/field-surveys'),
   submitSurvey: (data) => fetchApi('/field-surveys', {

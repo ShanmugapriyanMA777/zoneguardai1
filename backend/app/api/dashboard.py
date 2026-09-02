@@ -39,7 +39,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
     active_system_alerts = db.query(Alert).filter(Alert.is_active == True).count()
     
     return {
-        "district": "Pan-India Multi-Hazard Disaster Grid",
+        "district": "Tamil Nadu Multi-Hazard Disaster Grid",
         "state": "National Multi-State Coverage (Tamil Nadu, Uttarakhand, Kerala, Himachal, Odisha, Assam, Gujarat)",
         "last_updated": "Live Copernicus Sentinel-1 & Multi-Hazard Grid Active",
         "cards": {

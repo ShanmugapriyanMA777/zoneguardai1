@@ -54,7 +54,7 @@ export default function RedZoneExplorer({ onOpenShap, onOpenReport, onOpenReloca
     }
   };
 
-  // State filtering logic
+  // District / State filtering logic
   const filteredZones = zones.filter(z => {
     const matchesSearch = 
       z.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -63,15 +63,18 @@ export default function RedZoneExplorer({ onOpenShap, onOpenReport, onOpenReloca
 
     const matchesState = 
       selectedState === 'ALL' || 
-      z.name?.toLowerCase().includes(selectedState.toLowerCase());
+      (selectedState === 'Coastal' && (z.name?.toLowerCase().includes('cuddalore') || z.name?.toLowerCase().includes('nagapattinam') || z.name?.toLowerCase().includes('chennai') || z.name?.toLowerCase().includes('surge') || z.name?.toLowerCase().includes('beach'))) ||
+      (selectedState === 'Tenkasi' && (z.name?.toLowerCase().includes('tenkasi') || z.name?.toLowerCase().includes('tirunelveli') || z.name?.toLowerCase().includes('courtallam') || z.name?.toLowerCase().includes('manjolai') || z.name?.toLowerCase().includes('papanasam') || z.name?.toLowerCase().includes('kodayar'))) ||
+      z.name?.toLowerCase().includes(selectedState.toLowerCase()) ||
+      (z.district && z.district.toLowerCase().includes(selectedState.toLowerCase()));
 
     const matchesHazard = 
       selectedHazard === 'ALL' ||
-      (selectedHazard === 'LANDSLIDE' && (z.name?.toLowerCase().includes('landslide') || z.name?.toLowerCase().includes('slope') || z.name?.toLowerCase().includes('escarpment'))) ||
+      (selectedHazard === 'LANDSLIDE' && (z.name?.toLowerCase().includes('landslide') || z.name?.toLowerCase().includes('slope') || z.name?.toLowerCase().includes('escarpment') || z.name?.toLowerCase().includes('slump'))) ||
       (selectedHazard === 'SUBSIDENCE' && (z.name?.toLowerCase().includes('subsidence') || z.name?.toLowerCase().includes('fissure') || z.deformation_rate > 15)) ||
-      (selectedHazard === 'FLOOD' && (z.name?.toLowerCase().includes('flood') || z.name?.toLowerCase().includes('riverine') || z.distance_to_river < 100)) ||
-      (selectedHazard === 'CYCLONE' && (z.name?.toLowerCase().includes('cyclone') || z.name?.toLowerCase().includes('surge') || z.name?.toLowerCase().includes('coastal'))) ||
-      (selectedHazard === 'SEISMIC' && (z.name?.toLowerCase().includes('seismic') || z.name?.toLowerCase().includes('fault')));
+      (selectedHazard === 'FLOOD' && (z.name?.toLowerCase().includes('flood') || z.name?.toLowerCase().includes('riverine') || z.name?.toLowerCase().includes('torrent') || z.distance_to_river < 100)) ||
+      (selectedHazard === 'CYCLONE' && (z.name?.toLowerCase().includes('cyclone') || z.name?.toLowerCase().includes('surge') || z.name?.toLowerCase().includes('coastal') || z.name?.toLowerCase().includes('lowlands'))) ||
+      (selectedHazard === 'SEISMIC' && (z.name?.toLowerCase().includes('seismic') || z.name?.toLowerCase().includes('fault') || z.name?.toLowerCase().includes('shear')));
 
     return matchesSearch && matchesState && matchesHazard;
   });
@@ -92,7 +95,7 @@ export default function RedZoneExplorer({ onOpenShap, onOpenReport, onOpenReloca
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-black font-heading text-slate-950">Pan-India Hazard Red Zones & Precaution Matrix</h2>
+              <h2 className="text-xl font-black font-heading text-slate-950">Tamil Nadu Hazard Red Zones & Precaution Matrix</h2>
               <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-red-100 text-red-800 border border-red-300 flex items-center gap-1.5 shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
                 Live Situation Telemetry
@@ -138,17 +141,19 @@ export default function RedZoneExplorer({ onOpenShap, onOpenReport, onOpenReloca
         {/* State / Disaster Region Filter */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
           <span className="text-[11px] font-bold text-slate-500 mr-1 flex items-center gap-1">
-            <MapPin className="w-3.5 h-3.5" /> State:
+            <MapPin className="w-3.5 h-3.5" /> District:
           </span>
           {[
-            { id: 'ALL', label: 'All India' },
-            { id: 'Tamil Nadu', label: 'Tamil Nadu' },
-            { id: 'Uttarakhand', label: 'Uttarakhand' },
-            { id: 'Kerala', label: 'Kerala' },
-            { id: 'Himachal', label: 'Himachal' },
-            { id: 'Odisha', label: 'Odisha' },
-            { id: 'Assam', label: 'Assam' },
-            { id: 'Gujarat', label: 'Gujarat' }
+            { id: 'ALL', label: 'All Tamil Nadu (28)' },
+            { id: 'Nilgiris', label: 'Nilgiris (7)' },
+            { id: 'Coimbatore', label: 'Valparai (4)' },
+            { id: 'Dindigul', label: 'Kodaikanal (4)' },
+            { id: 'Theni', label: 'Meghamalai & Bodi (3)' },
+            { id: 'Tenkasi', label: 'Tenkasi & Tirunelveli (4)' },
+            { id: 'Salem', label: 'Salem / Yercaud (1)' },
+            { id: 'Namakkal', label: 'Kolli Hills (1)' },
+            { id: 'Kanyakumari', label: 'Kanyakumari (1)' },
+            { id: 'Coastal', label: 'Coastal Surge (3)' }
           ].map(st => (
             <button
               key={st.id}
@@ -171,11 +176,11 @@ export default function RedZoneExplorer({ onOpenShap, onOpenReport, onOpenReloca
           </span>
           {[
             { id: 'ALL', label: 'All Hazards' },
-            { id: 'LANDSLIDE', label: '🏔️ Landslide' },
-            { id: 'SUBSIDENCE', label: '🏚️ Subsidence' },
-            { id: 'FLOOD', label: '🌊 Flood' },
-            { id: 'CYCLONE', label: '🌀 Cyclone' },
-            { id: 'SEISMIC', label: '🌍 Seismic' }
+            { id: 'LANDSLIDE', label: 'Landslide' },
+            { id: 'SUBSIDENCE', label: 'Subsidence' },
+            { id: 'FLOOD', label: 'Flood' },
+            { id: 'CYCLONE', label: 'Cyclone' },
+            { id: 'SEISMIC', label: 'Seismic' }
           ].map(hz => (
             <button
               key={hz.id}
@@ -259,7 +264,7 @@ export default function RedZoneExplorer({ onOpenShap, onOpenReport, onOpenReloca
 
                   <div className="flex items-center justify-between mt-3 text-xs">
                     <span className="text-[11px] text-emerald-800 font-bold bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200 truncate max-w-[280px]">
-                      🛡️ {zone.recommended_action?.split('(')[0] || 'Relocation Planning Active'}
+                      {zone.recommended_action?.split('(')[0] || 'Relocation Planning Active'}
                     </span>
                     <ChevronRight className="w-4 h-4 text-slate-400" />
                   </div>

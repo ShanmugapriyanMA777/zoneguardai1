@@ -54,8 +54,8 @@ def root():
             "dashboard_stats": "/api/dashboard/stats",
             "gis_layers": "/api/hazards/layers",
             "hazard_zones": "/api/zones",
-            "zone_shap_example": "/api/zones/ZONE-RZ-014/shap",
-            "relocation_recommendation": "/api/relocation/recommend/ZONE-RZ-014",
+            "zone_shap_example": "/api/zones/ZONE-TN-001/shap",
+            "relocation_recommendation": "/api/relocation/recommend/ZONE-TN-001",
             "deformation_points": "/api/deformation/points",
             "ahp_matrix": "/api/relocation/ahp/default-matrix"
         }

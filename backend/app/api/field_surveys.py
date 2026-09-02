@@ -14,6 +14,7 @@ class FieldSurveyCreate(BaseModel):
     surveyor_name: str = "Field Officer"
     lat: float
     lng: float
+    gps_accuracy_m: Optional[float] = 4.2
     observed_population: int = 0
     damaged_houses: int = 0
     road_condition: str = "Passable"
@@ -27,6 +28,16 @@ class FieldSurveyCreate(BaseModel):
     ground_condition: str = "Stable"
     remarks: Optional[str] = None
     photo_url: Optional[str] = None
+    # Extended Ground Truth Fields
+    household_id: Optional[str] = None
+    family_members_count: Optional[int] = None
+    vulnerability_tags: Optional[List[str]] = []
+    livelihood_type: Optional[str] = None
+    relocation_willingness: Optional[str] = "Yes - Priority"
+    community_ceri_score: Optional[float] = None
+    relocation_site_inspected: Optional[str] = None
+    relocation_suitability_status: Optional[str] = None
+    environmental_hazards: Optional[List[str]] = []
 
 class BatchSyncRequest(BaseModel):
     surveys: List[FieldSurveyCreate]

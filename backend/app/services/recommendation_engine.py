@@ -30,7 +30,7 @@ class RelocationRecommendationEngine:
         """
         Ranks candidate relocation sites for a target hazard red zone in Tamil Nadu.
         """
-        zone_code = zone.get("code", "ZONE-RZ-014")
+        zone_code = zone.get("code", "ZONE-TN-001")
         zone_name = zone.get("name", "Coonoor-Marapallam Ghats Subsidence Sector (Nilgiris, Tamil Nadu)")
         required_pop = int(zone.get("population", 2840))
         z_lat = float(zone.get("center_lat", 11.3530))

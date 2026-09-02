@@ -48,7 +48,7 @@ export default function FieldOfficerMobileApp({ onSurveySubmitted }) {
   ]);
 
   const [formData, setFormData] = useState({
-    village_name: "Coonoor Marapallam Upper Ward (ZONE-RZ-014, TN)",
+    village_name: "Coonoor Marapallam Upper Ward (ZONE-TN-001, TN)",
     surveyor_name: "R. Kavitha",
     lat: 11.3532,
     lng: 76.7954,
@@ -125,10 +125,10 @@ export default function FieldOfficerMobileApp({ onSurveySubmitted }) {
         confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 } });
         await loadSurveys();
         if (onSurveySubmitted) onSurveySubmitted();
-        alert("✅ Ground Survey Synced Successfully to District Central Disaster Database!");
+        alert("Ground Survey Synced Successfully to District Central Disaster Database.");
       } else {
         setOfflineQueue(prev => [formData, ...prev]);
-        alert("📦 Saved to Offline Queue. Will auto-sync when network is restored.");
+        alert("Saved to Offline Queue. Will auto-sync when network is restored.");
       }
     } catch (err) {
       console.error("Submission error:", err);
@@ -149,7 +149,7 @@ export default function FieldOfficerMobileApp({ onSurveySubmitted }) {
       setOfflineQueue([]);
       await loadSurveys();
       confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
-      alert("✅ All offline survey batches synced successfully to TNDMA servers!");
+      alert("All offline survey batches synced successfully to TNDMA servers.");
     } catch (e) {
       console.error("Sync error:", e);
       alert("Sync failed. Check connection.");
@@ -270,7 +270,7 @@ export default function FieldOfficerMobileApp({ onSurveySubmitted }) {
                   onClick={handleCaptureGPS}
                   className="px-3 py-1 rounded-xl bg-red-100 hover:bg-red-200 text-red-900 font-bold text-[11px] border border-red-300 transition-colors cursor-pointer"
                 >
-                  📡 Re-Lock GPS
+                  Re-Lock GPS
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-3 font-mono">
@@ -284,7 +284,7 @@ export default function FieldOfficerMobileApp({ onSurveySubmitted }) {
                 </div>
               </div>
               <div className="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
-                <span>🛰️ GPS Status: {gpsAccuracy}</span>
+                <span>GPS Status: {gpsAccuracy}</span>
               </div>
             </div>
 

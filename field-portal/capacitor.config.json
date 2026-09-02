@@ -1,0 +1,9 @@
+{
+  "appId": "gov.tndma.zoneguard.fieldops",
+  "appName": "ZoneGuard FieldOps",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "cleartext": true
+  }
+}

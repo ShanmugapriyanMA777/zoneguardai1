@@ -29,14 +29,30 @@ def get_gis_layers(db: Session = Depends(get_db)):
             "type": "Point",
             "coordinates": [z.center_lng, z.center_lat]
         }
+        zone_dist = "Nilgiris"
+        if "Coimbatore" in z.name: zone_dist = "Coimbatore"
+        elif "Dindigul" in z.name or "Kodaikanal" in z.name: zone_dist = "Dindigul"
+        elif "Theni" in z.name or "Meghamalai" in z.name or "Bodi" in z.name: zone_dist = "Theni"
+        elif "Tenkasi" in z.name or "Courtallam" in z.name: zone_dist = "Tenkasi"
+        elif "Tirunelveli" in z.name or "Manjolai" in z.name: zone_dist = "Tirunelveli"
+        elif "Salem" in z.name or "Yercaud" in z.name: zone_dist = "Salem"
+        elif "Namakkal" in z.name or "Kolli" in z.name: zone_dist = "Namakkal"
+        elif "Kanyakumari" in z.name or "Pechiparai" in z.name: zone_dist = "Kanyakumari"
+        elif "Cuddalore" in z.name: zone_dist = "Cuddalore"
+        elif "Nagapattinam" in z.name: zone_dist = "Nagapattinam"
+        elif "Chennai" in z.name: zone_dist = "Chennai"
+
         zone_features.append({
             "type": "Feature",
             "properties": {
                 "id": z.id,
                 "code": z.code,
                 "name": z.name,
+                "district": zone_dist,
+                "hazard_type": z.land_use or "Landslide Creep",
                 "risk_level": z.risk_level,
                 "risk_score": z.risk_score,
+                "susceptibility_score": z.susceptibility_score,
                 "population": z.population,
                 "buildings": z.buildings,
                 "deformation_rate": z.deformation_rate,
@@ -44,6 +60,7 @@ def get_gis_layers(db: Session = Depends(get_db)):
                 "rainfall": z.rainfall,
                 "distance_to_river": z.distance_to_river,
                 "elevation": z.elevation,
+                "geology": z.geology,
                 "vulnerability_score": z.vulnerability_score,
                 "recommended_action": z.recommended_action,
                 "center_lat": z.center_lat,

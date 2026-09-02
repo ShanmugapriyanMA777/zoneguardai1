@@ -1,5 +1,5 @@
 """
-Pan-India Multi-Hazard Dataset and Regional Hotspots Configuration
+ZoneGuard AI Core Configuration Engine
 Covers all major Indian disaster corridors and hazard types:
 1. Landslides & Debris Flow (Western Ghats & Himalayas)
 2. Riverine & Flash Floods (Assam Brahmaputra, Bihar Kosi, Tamil Nadu Coast)
@@ -9,12 +9,13 @@ Covers all major Indian disaster corridors and hazard types:
 """
 
 PAN_INDIA_REGIONS = {
-    "ALL": {
-        "name": "Pan-India National Disaster Grid",
-        "center_lat": 21.7679,
-        "center_lng": 78.8718,
-        "zoom": 5,
-        "primary_hazard": "MULTI_HAZARD"
+    "all_tn": {
+        "name": "Tamil Nadu Disaster Grid",
+        "state": "Tamil Nadu",
+        "center": [10.8500, 78.5000],
+        "zoom": 7.5,
+        "primary_hazard": "Multi-Hazard Grid (Landslide Creep, Flash Floods, Coastal Surge)",
+        "red_zone_count": 28
     },
     "TN_NILGIRIS": {
         "name": "Nilgiris & Western Ghats (Tamil Nadu)",

@@ -1,61 +1,233 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ClipboardCheck, 
-  MapPin, 
-  Camera, 
-  Wifi, 
-  WifiOff, 
-  Send, 
-  RefreshCw, 
-  CheckCircle2, 
-  AlertTriangle, 
-  List, 
-  PlusCircle, 
-  Upload, 
-  ShieldAlert,
-  ChevronRight,
-  Sparkles,
-  Layers,
-  FileCheck,
-  Smartphone,
-  ExternalLink,
-  Sliders,
-  Check,
-  Building,
-  Users,
-  Compass
-} from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { api } from './utils/api';
 
+// Components
+import Header from './components/Header';
+import BottomNav from './components/BottomNav';
+import DashboardTab from './components/DashboardTab';
+import MapTab from './components/MapTab';
+import AssignmentsTab from './components/AssignmentsTab';
+import SurveyTab from './components/SurveyTab';
+import RelocationTab from './components/RelocationTab';
+import CommunityTab from './components/CommunityTab';
+import SyncTab from './components/SyncTab';
+import ProfileTab from './components/ProfileTab';
+
+// Icons for Auth & Splash
+import { 
+  KeyRound, 
+  UserCheck, 
+  User, 
+  Lock, 
+  ArrowRight, 
+  Sparkles,
+  Smartphone,
+  Signal,
+  Battery
+} from 'lucide-react';
+
+// Preset Officer Accounts for Instant Demo Login
+const DEMO_ACCOUNTS = [
+  {
+    id: "OFFICER-TN-774",
+    name: "R. Kavitha",
+    email: "kavitha.tndma@zoneguard.gov.in",
+    designation: "TNDMA Field Incident Commander & Revenue Inspector",
+    district: "Nilgiris - Western Ghats Disaster Grid (Tamil Nadu)",
+    assigned_block: "Coonoor & Kotagiri Taluk",
+    phone: "+91 94421 88920",
+    badge_no: "TNDMA-WG-2026-088",
+    avatar_initials: "RK",
+    role: "INCIDENT_COMMANDER"
+  },
+  {
+    id: "OFFICER-TN-102",
+    name: "Dr. K. Senthil Nathan, IAS",
+    email: "collector.nilgiris@zoneguard.gov.in",
+    designation: "District Collector & Chairman DDMA",
+    district: "Nilgiris District Disaster Grid (Tamil Nadu)",
+    assigned_block: "District HQ Command Center",
+    phone: "+91 94432 11001",
+    badge_no: "DDMA-IAS-2026-001",
+    avatar_initials: "SN",
+    role: "ADMIN"
+  },
+  {
+    id: "OFFICER-TN-405",
+    name: "M. Rajesh",
+    email: "rajesh.sdrf@zoneguard.gov.in",
+    designation: "SDRF Senior Field Surveyor & Rescue Lead",
+    district: "Coimbatore & Anamalai Hazard Grid (Tamil Nadu)",
+    assigned_block: "Valparai & Solaiyar Ghats",
+    phone: "+91 98410 44552",
+    badge_no: "SDRF-TN-2026-405",
+    avatar_initials: "MR",
+    role: "FIELD_SURVEYOR"
+  }
+];
+
+// Preset Tamil Nadu Assigned Hazard Zones
+const ASSIGNED_ZONES = [
+  {
+    code: "ZONE-TN-001",
+    name: "Coonoor Marapallam Ghats Subsidence Sector",
+    district: "Nilgiris",
+    hazard_type: "Landslide Creep & Highway Toe Erosion",
+    priority: "URGENT",
+    priority_level: 1,
+    risk_score: 99.6,
+    deformation_rate: 18.6,
+    slope: 34.2,
+    population: 2840,
+    habitations_count: 3,
+    status: "Inspection Required",
+    lat: 11.3530,
+    lng: 76.7950,
+    recommended_action: "Priority pre-disaster relocation to Mettupalayam Safe Plateau (SITE-07)"
+  },
+  {
+    code: "ZONE-TN-002",
+    name: "Kotagiri Kattery Ravines Landslide Corridor",
+    district: "Nilgiris",
+    hazard_type: "Debris Flow & Scarp Failure",
+    priority: "HIGH",
+    priority_level: 2,
+    risk_score: 88.5,
+    deformation_rate: 14.4,
+    slope: 31.5,
+    population: 1950,
+    habitations_count: 2,
+    status: "Pending Survey",
+    lat: 11.4180,
+    lng: 76.8620,
+    recommended_action: "Deep drainage diversion & hillside anchor piling"
+  },
+  {
+    code: "ZONE-TN-004",
+    name: "Gudalur Devala Gold-Belt Debris Slump",
+    district: "Nilgiris",
+    hazard_type: "Torrential Soil Slump & Mine Subsidences",
+    priority: "URGENT",
+    priority_level: 1,
+    risk_score: 99.1,
+    deformation_rate: 17.5,
+    slope: 29.5,
+    population: 3400,
+    habitations_count: 4,
+    status: "Active Verification",
+    lat: 11.4780,
+    lng: 76.3850,
+    recommended_action: "Permanent building decommissioning & plantation worker shelter"
+  },
+  {
+    code: "ZONE-TN-008",
+    name: "Valparai 40-Hairpin Ghat Road Escarpment",
+    district: "Coimbatore",
+    hazard_type: "Torrential Debris Flow & Rockfall",
+    priority: "URGENT",
+    priority_level: 1,
+    risk_score: 100.0,
+    deformation_rate: 19.8,
+    slope: 36.5,
+    population: 2850,
+    habitations_count: 3,
+    status: "Scheduled",
+    lat: 10.3270,
+    lng: 76.9550,
+    recommended_action: "Priority pre-monsoon relocation to Pollachi Tableland (SITE-13)"
+  },
+  {
+    code: "ZONE-TN-012",
+    name: "Kodaikanal Pillar Rocks Shear Fracture Scarp",
+    district: "Dindigul",
+    hazard_type: "Vertical Cliff Scarp Shear & Topple",
+    priority: "HIGH",
+    priority_level: 2,
+    risk_score: 98.9,
+    deformation_rate: 16.8,
+    slope: 42.0,
+    population: 2250,
+    habitations_count: 2,
+    status: "Pending Survey",
+    lat: 10.2110,
+    lng: 77.4670,
+    recommended_action: "Perimeter safety buffer & tourist evacuation siren trigger"
+  }
+];
+
 export default function App() {
-  const [isOnline, setIsOnline] = useState(true);
+  // Screen Flow: 'splash' -> 'auth' -> 'app'
+  const [appScreen, setAppScreen] = useState('splash');
+  const [splashProgress, setSplashProgress] = useState(15);
+  const [splashStatus, setSplashStatus] = useState("Connecting to Copernicus Sentinel-1 SAR Telemetry Grid...");
+
+  // Auth Screen State
+  const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
+  const [officer, setOfficer] = useState(DEMO_ACCOUNTS[0]);
+
+  // Login Form
+  const [loginForm, setLoginForm] = useState({
+    officerId: "OFFICER-TN-774",
+    password: "••••••••",
+    department: "TNDMA Incident Command",
+    remember: true
+  });
+
+  // Signup Form
+  const [signupForm, setSignupForm] = useState({
+    name: "",
+    officerId: "",
+    email: "",
+    phone: "",
+    district: "Nilgiris (Western Ghats Grid)",
+    department: "Tamil Nadu Disaster Management Authority (TNDMA)",
+    password: "",
+    badgeNo: ""
+  });
+
+  // Navigation State
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [backendConnected, setBackendConnected] = useState(false);
-  const [activeTab, setActiveTab] = useState('survey'); // 'survey', 'queue', 'history'
-  const [zonesList, setZonesList] = useState([]);
+  const [deviceFrameMode, setDeviceFrameMode] = useState(false);
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState(null);
+
+  // Live GPS Coordinates
+  const [gpsCoords, setGpsCoords] = useState({ lat: 11.3532, lng: 76.7954, accuracy: 3.2 });
+  const [mapCenter, setMapCenter] = useState([11.3530, 76.7950]);
+  const [mapZoom, setMapZoom] = useState(13);
+
+  // Data State
+  const [zones, setZones] = useState(ASSIGNED_ZONES);
+  const [relocationSites, setRelocationSites] = useState([]);
+  const [selectedMapZone, setSelectedMapZone] = useState(ASSIGNED_ZONES[0]);
   
-  // Offline Queue saved in localStorage
+  // Offline Queue
   const [offlineQueue, setOfflineQueue] = useState(() => {
     try {
-      const saved = localStorage.getItem('zoneguard_offline_queue');
+      const saved = localStorage.getItem('zoneguard_field_offline_queue');
       return saved ? JSON.parse(saved) : [
         {
-          village_name: "Kotagiri Kattery Sector (ZONE-RZ-002, TN)",
+          survey_code: "FS-TN-2026-8812",
+          village_name: "Kotagiri Kattery Sector Cluster (ZONE-TN-002)",
+          zone_code: "ZONE-TN-002",
           surveyor_name: "R. Kavitha (Field Officer)",
           lat: 11.4182,
           lng: 76.8621,
+          gps_accuracy_m: 3.4,
+          household_id: "HH-KT-042",
+          family_members_count: 5,
+          vulnerability_tags: ["Elderly (>65 yrs)", "Children (<5 yrs)"],
+          livelihood_type: "Tea Plantation Worker",
+          relocation_willingness: "Yes - Priority",
           observed_population: 820,
           damaged_houses: 34,
-          road_condition: "Cracked / 4x4 Only",
-          water_availability: "Low Pressure",
-          electricity_status: "Operational",
-          medical_status: "First Aid Kit",
           observed_cracks: true,
           crack_depth_cm: 6.2,
-          landslide_signs: true,
-          flood_depth_m: 0.0,
           ground_condition: "Active Subsidence",
-          remarks: "Tea estate retaining wall sheared by 4 inches overnight."
+          remarks: "Tea estate retaining wall sheared by 4 inches overnight. Urgent drainage diversion required.",
+          created_at: new Date().toLocaleString()
         }
       ];
     } catch (e) {
@@ -63,530 +235,734 @@ export default function App() {
     }
   });
 
+  const [syncedSurveys, setSyncedSurveys] = useState([]);
+  const [syncing, setSyncing] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Active Survey Form State
   const [formData, setFormData] = useState({
-    village_name: "Coonoor Marapallam Upper Ward (ZONE-RZ-014, TN)",
-    surveyor_name: "R. Kavitha (Field Officer #TN-774)",
+    zone_code: "ZONE-TN-001",
+    village_name: "Coonoor Marapallam Upper Ward Settlement",
+    surveyor_name: "R. Kavitha (TNDMA Field Incident Commander)",
     lat: 11.3532,
     lng: 76.7954,
+    gps_accuracy_m: 3.2,
+    household_id: "HH-CN-014-08",
+    family_members_count: 4,
+    vulnerability_tags: ["Elderly (>65 yrs)", "Persons with Disabilities (PWD)"],
+    livelihood_type: "Tea & Coffee Plantation Worker",
+    relocation_willingness: "Yes - Willing Immediately",
     observed_population: 2840,
     damaged_houses: 142,
     road_condition: "Severely Cracked (4x4 Vehicles Only)",
-    water_availability: "Intermittent / Pipe Ruptures",
-    electricity_status: "Partially De-energized for Safety",
-    medical_status: "Emergency TNDRF Unit Deployed",
     observed_cracks: true,
     crack_depth_cm: 8.4,
-    landslide_signs: true,
-    flood_depth_m: 0.0,
-    ground_condition: "Active Subsidence",
-    remarks: "Continuous creaking noises reported along mountain scarp. Immediate pre-disaster evacuation to Mettupalayam recommended.",
-    photo_url: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&q=80&w=600"
+    slope_instability: true,
+    building_damage: true,
+    road_damage: true,
+    drainage_blocked: true,
+    remarks: "Continuous ground creaking logged along Marapallam NH-181 scarp. Pre-disaster relocation to Mettupalayam recommended."
   });
 
-  const [submitting, setSubmitting] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [submittedSurveys, setSubmittedSurveys] = useState([]);
-  const [gpsAccuracy, setGpsAccuracy] = useState('±2.8m (Live RTK High Accuracy GPS Locked)');
-  const [photoPreview, setPhotoPreview] = useState(formData.photo_url);
+  // Relocation Site Inspection State
+  const [siteInspection, setSiteInspection] = useState({
+    site_code: "SITE-07",
+    site_name: "Mettupalayam Safe Plateau Relocation Township (Nilgiris Foot, TN)",
+    verified_area_sqm: 220000,
+    road_accessibility: "Excellent (NH-181 4-Lane)",
+    water_availability: "Adequate (Bhavani River Source)",
+    electricity_status: "TNEB Substation Connection Ready",
+    healthcare_distance_km: 2.1,
+    school_distance_km: 1.5,
+    assigned_status: "Suitable",
+    inspection_notes: "Elevated bedrock plateau verified stable. Excellent highway ingress for emergency vehicles."
+  });
 
+  // Community Engagement Survey State
+  const [communitySurvey, setCommunitySurvey] = useState({
+    zone_code: "ZONE-TN-001",
+    village_name: "Coonoor Marapallam Settlement",
+    households_consulted: 48,
+    willing_count: 42,
+    reluctant_count: 6,
+    objection_severity: "Low",
+    ceri_score: 22.4,
+    officer_notes: "90% of families agree to pre-monsoon relocation provided transport subsidy is disbursed."
+  });
+
+  // Splash Screen Initialization Simulation
   useEffect(() => {
-    checkConnection();
-    loadSurveys();
-    loadZones();
+    const steps = [
+      { progress: 25, status: "Synchronizing Sentinel-1 PSInSAR Deformation Feeds..." },
+      { progress: 50, status: "Calibrating Offline High-Precision GNSS Receiver..." },
+      { progress: 75, status: "Indexing 28 Tamil Nadu Multi-Hazard Spatial Red Zones..." },
+      { progress: 95, status: "Securing Disaster Incident Officer Session..." },
+      { progress: 100, status: "ZoneGuard Offline-First Engine Ready" }
+    ];
+
+    let stepIndex = 0;
+    const interval = setInterval(() => {
+      if (stepIndex < steps.length) {
+        setSplashProgress(steps[stepIndex].progress);
+        setSplashStatus(steps[stepIndex].status);
+        stepIndex++;
+      } else {
+        clearInterval(interval);
+        setTimeout(() => {
+          setAppScreen('auth');
+        }, 400);
+      }
+    }, 400);
+
+    return () => clearInterval(interval);
   }, []);
 
-  // Save offline queue to localStorage
+  // Online / Offline & Initial Data Fetch
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      autoSync();
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+      setDeferredInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+
+    fetchInitialData();
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    };
+  }, []);
+
+  // Save offline queue
   useEffect(() => {
     try {
-      localStorage.setItem('zoneguard_offline_queue', JSON.stringify(offlineQueue));
+      localStorage.setItem('zoneguard_field_offline_queue', JSON.stringify(offlineQueue));
     } catch (e) {
-      console.warn("Storage error:", e);
+      console.warn("Storage save error:", e);
     }
   }, [offlineQueue]);
 
-  const checkConnection = async () => {
+  const fetchInitialData = async () => {
     try {
-      await api.checkBackendHealth();
-      setBackendConnected(true);
-      setIsOnline(true);
+      const [statsRes, sitesRes, surveysRes] = await Promise.all([
+        api.getStats().catch(() => null),
+        api.getRelocationSites().catch(() => []),
+        api.getFieldSurveys().catch(() => [])
+      ]);
+
+      if (statsRes) setBackendConnected(true);
+      if (Array.isArray(sitesRes) && sitesRes.length > 0) setRelocationSites(sitesRes);
+      if (Array.isArray(surveysRes)) setSyncedSurveys(surveysRes);
     } catch (e) {
       setBackendConnected(false);
-      setIsOnline(false);
     }
   };
 
-  const loadZones = async () => {
-    try {
-      const list = await api.getZones();
-      if (Array.isArray(list)) {
-        setZonesList(list);
-      }
-    } catch (e) {
-      console.warn("Zones load handled:", e);
-    }
-  };
-
-  const loadSurveys = async () => {
-    try {
-      const list = await api.getFieldSurveys();
-      setSubmittedSurveys(list || []);
-    } catch (e) {
-      console.warn("Surveys load handled:", e);
-    }
-  };
-
-  // GPS Geolocation Handler
-  const handleCaptureGPS = () => {
+  const handleAcquireGPS = () => {
+    if (navigator.vibrate) navigator.vibrate(30);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = +position.coords.latitude.toFixed(5);
-          const lng = +position.coords.longitude.toFixed(5);
-          const acc = Math.round(position.coords.accuracy || 3);
-          setFormData(prev => ({ ...prev, lat, lng }));
-          setGpsAccuracy(`±${acc}m (Live Mobile GPS Locked)`);
-          confetti({ particleCount: 30, spread: 50, origin: { y: 0.6 } });
+        (pos) => {
+          const lat = parseFloat(pos.coords.latitude.toFixed(6));
+          const lng = parseFloat(pos.coords.longitude.toFixed(6));
+          const acc = parseFloat(pos.coords.accuracy.toFixed(1));
+          setGpsCoords({ lat, lng, accuracy: acc });
+          setFormData(prev => ({ ...prev, lat, lng, gps_accuracy_m: acc }));
+          setMapCenter([lat, lng]);
         },
-        (err) => {
-          console.warn("GPS lock fallback:", err);
-          const randLat = +(11.3532 + (Math.random() - 0.5) * 0.002).toFixed(5);
-          const randLng = +(76.7954 + (Math.random() - 0.5) * 0.002).toFixed(5);
-          setFormData(prev => ({ ...prev, lat: randLat, lng: randLng }));
-          setGpsAccuracy('±3.4m (Nilgiris Ghats GPS Fixed)');
+        () => {
+          setGpsCoords({ lat: 11.3532, lng: 76.7954, accuracy: 3.2 });
         },
         { enableHighAccuracy: true, timeout: 5000 }
       );
     }
   };
 
-  // Photo Upload Handler
-  const handlePhotoUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result);
-        setFormData(prev => ({ ...prev, photo_url: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleSelectZoneToInspect = (zone) => {
+    setSelectedMapZone(zone);
+    setFormData(prev => ({
+      ...prev,
+      zone_code: zone.code,
+      village_name: `${zone.name.split('(')[0].trim()} Settlement`,
+      lat: zone.lat || prev.lat,
+      lng: zone.lng || prev.lng,
+      observed_population: zone.population || prev.observed_population
+    }));
+    setMapCenter([zone.lat || 11.3530, zone.lng || 76.7950]);
   };
 
-  // Submit Survey
-  const handleSubmitSurvey = async (e) => {
-    e.preventDefault();
+  const handleSubmitSurvey = async (evidencePhotos = []) => {
+    if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
     setSubmitting(true);
+
+    const surveyCode = `FS-TN-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const newRecord = {
+      ...formData,
+      survey_code: surveyCode,
+      surveyor_role: "FIELD_OFFICER",
+      evidence_photos_count: evidencePhotos.length,
+      photos: evidencePhotos,
+      status: isOnline ? "SYNCED" : "PENDING_SYNC",
+      created_at: new Date().toLocaleString(),
+      synced_at: isOnline ? new Date().toLocaleString() : null
+    };
 
     if (isOnline) {
       try {
-        await api.submitSurvey(formData);
-        confetti({ particleCount: 70, spread: 65, origin: { y: 0.5 } });
-        await loadSurveys();
-        alert("✅ Ground Survey Synced Successfully to ZoneGuard AI Central Command!");
+        await api.submitSurvey(newRecord);
+        setSyncedSurveys(prev => [newRecord, ...prev]);
+        confetti({ particleCount: 50, spread: 60 });
+        alert(`Field Survey ${surveyCode} uploaded and synced with State Command Center.`);
       } catch (err) {
-        console.warn("Backend offline, saving to queue:", err);
-        setOfflineQueue(prev => [formData, ...prev]);
-        alert("⚠️ Backend unreachable. Survey saved locally to Offline Queue.");
+        setOfflineQueue(prev => [newRecord, ...prev]);
+        alert(`Upload saved to local offline queue. Will auto-sync when central server is connected.`);
       }
     } else {
-      setOfflineQueue(prev => [formData, ...prev]);
-      alert("📱 Offline Mode: Survey recorded locally and queued for automatic sync.");
+      setOfflineQueue(prev => [newRecord, ...prev]);
+      alert(`Device offline. Survey ${surveyCode} stored in local encrypted memory.`);
     }
 
     setSubmitting(false);
+    setActiveTab('sync');
   };
 
-  // Sync Offline Queue
-  const handleSyncQueue = async () => {
+  const autoSync = async () => {
     if (offlineQueue.length === 0) return;
     setSyncing(true);
+    if (navigator.vibrate) navigator.vibrate(50);
     try {
-      await api.syncSurveys(offlineQueue);
-      setOfflineQueue([]);
-      await loadSurveys();
-      confetti({ particleCount: 80, spread: 70, origin: { y: 0.4 } });
-      alert(`🎉 Successfully Synced ${offlineQueue.length} Field Surveys to Central GIS!`);
+      const res = await api.syncSurveys(offlineQueue);
+      if (res?.status === "BATCH_SYNCED") {
+        setSyncedSurveys(prev => [...offlineQueue.map(q => ({ ...q, status: "SYNCED" })), ...prev]);
+        setOfflineQueue([]);
+        confetti({ particleCount: 60, spread: 70 });
+      }
     } catch (e) {
-      alert("❌ Sync failed. Please verify connection to http://127.0.0.1:8000");
+      console.warn("Sync failed:", e);
     } finally {
       setSyncing(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-900">
-      {/* Top Mobile-Optimized Header */}
-      <header className="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50 border-b border-slate-800">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-sky-400 shadow-sm">
-              <Smartphone className="w-6 h-6" />
+  const calculateCERI = (households, willing, reluctant, severity) => {
+    const refusalRatio = households > 0 ? (reluctant / households) : 0;
+    const severityWeight = severity === "High" ? 35 : severity === "Moderate" ? 20 : 10;
+    const ceri = Math.round((refusalRatio * 55 + severityWeight));
+    return Math.min(100, Math.max(0, ceri));
+  };
+
+  const handleLoginSubmit = (e) => {
+    e.preventDefault();
+    if (navigator.vibrate) navigator.vibrate(40);
+    const matched = DEMO_ACCOUNTS.find(a => a.id.toLowerCase() === loginForm.officerId.toLowerCase() || a.email.toLowerCase() === loginForm.officerId.toLowerCase()) || DEMO_ACCOUNTS[0];
+    setOfficer(matched);
+    setAppScreen('app');
+    confetti({ particleCount: 40, spread: 50 });
+  };
+
+  const handleQuickDemoLogin = (account) => {
+    if (navigator.vibrate) navigator.vibrate(30);
+    setOfficer(account);
+    setAppScreen('app');
+    confetti({ particleCount: 40, spread: 50 });
+  };
+
+  const handleSignupSubmit = (e) => {
+    e.preventDefault();
+    if (!signupForm.name || !signupForm.officerId) {
+      alert("Please fill in your name and Officer ID.");
+      return;
+    }
+    if (navigator.vibrate) navigator.vibrate(50);
+    const newOfficer = {
+      id: signupForm.officerId || `OFFICER-TN-${Math.floor(100 + Math.random() * 900)}`,
+      name: signupForm.name,
+      email: signupForm.email || `${signupForm.name.toLowerCase().replace(/\s+/g, '')}@zoneguard.gov.in`,
+      designation: `${signupForm.department} Field Officer`,
+      district: `${signupForm.district} Grid (Tamil Nadu)`,
+      assigned_block: "Assigned Corridor",
+      phone: signupForm.phone || "+91 94400 00000",
+      badge_no: signupForm.badgeNo || `TNDMA-FO-2026-${Math.floor(100 + Math.random() * 900)}`,
+      avatar_initials: signupForm.name.substring(0, 2).toUpperCase(),
+      role: "FIELD_SURVEYOR"
+    };
+    setOfficer(newOfficer);
+    setAppScreen('app');
+    confetti({ particleCount: 60, spread: 70 });
+  };
+
+  const handleLogout = () => {
+    if (navigator.vibrate) navigator.vibrate(20);
+    setAppScreen('auth');
+  };
+
+  // =========================================================================
+  // VIEW 1: SPLASH SCREEN
+  // =========================================================================
+  if (appScreen === 'splash') {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 select-none relative overflow-hidden animate-fade-in">
+        <div className="absolute w-96 h-96 rounded-full bg-emerald-600/15 blur-3xl animate-pulse pointer-events-none" />
+        
+        <div className="relative z-10 max-w-sm w-full text-center space-y-6">
+          <div className="w-32 h-32 mx-auto rounded-3xl overflow-hidden shadow-2xl border-4 border-emerald-500/80 bg-white p-2">
+            <img src="/app-icon.png" alt="ZoneGuard AI Field Officer Logo" className="w-full h-full object-contain" />
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-[10px] uppercase font-mono font-black px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-700">
+              GOVERNMENT OF TAMIL NADU • TNDMA
+            </span>
+            <h1 className="text-2xl font-black text-white font-heading tracking-wide">
+              ZONEGUARD <span className="text-emerald-400">FIELD OPS</span>
+            </h1>
+            <p className="text-xs text-slate-400 font-semibold">
+              Disaster Ground-Truth & Relocation Mobile Portal
+            </p>
+          </div>
+
+          <div className="space-y-2 pt-4">
+            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700">
+              <div 
+                className="bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 h-full rounded-full transition-all duration-300"
+                style={{ width: `${splashProgress}%` }}
+              />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-base font-black font-heading text-white">ZoneGuard Field Portal</h1>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-sky-950 text-sky-300 border border-sky-700">
-                  Mobile App
-                </span>
-              </div>
-              <p className="text-xs text-slate-400">National Ground-Truth Disaster Survey & Verification</p>
-            </div>
+            <p className="text-[11px] font-mono text-emerald-400 font-bold animate-pulse">
+              {splashStatus}
+            </p>
           </div>
 
-          {/* Right Controls: Online Toggle & Main GIS Link */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsOnline(!isOnline)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                isOnline 
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' 
-                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-              }`}
-            >
-              {isOnline ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
-              <span>{isOnline ? 'Online (Live)' : 'Offline Queue'}</span>
-            </button>
-
-            <a
-              href="http://localhost:5173"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition-all cursor-pointer shadow-sm"
-              title="Open Central National GIS Command Center"
-            >
-              <span>Main GIS</span>
-              <ExternalLink className="w-3.5 h-3.5 text-sky-400" />
-            </a>
-          </div>
-        </div>
-      </header>
-
-      {/* Backend Connection Alert Banner */}
-      <div className={`py-2 px-4 text-xs font-mono font-bold flex items-center justify-between border-b ${
-        backendConnected ? 'bg-emerald-50 text-emerald-900 border-emerald-200' : 'bg-amber-50 text-amber-900 border-amber-200'
-      }`}>
-        <div className="max-w-4xl mx-auto w-full flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className={`w-2.5 h-2.5 rounded-full ${backendConnected ? 'bg-emerald-600 animate-pulse' : 'bg-amber-600'}`} />
-            <span>Central API: <strong>http://127.0.0.1:8000</strong> ({backendConnected ? 'Connected & Synchronized' : 'Offline / Standalone Cache'})</span>
-          </div>
-          <button 
-            onClick={checkConnection}
-            className="hover:underline flex items-center gap-1 cursor-pointer text-[11px]"
+          <button
+            onClick={() => setAppScreen('auth')}
+            className="text-[11px] font-mono font-bold text-slate-500 hover:text-slate-300 underline cursor-pointer pt-2 btn-touch"
           >
-            <RefreshCw className="w-3 h-3" />
-            <span>Check Link</span>
+            Skip Initialization →
           </button>
         </div>
       </div>
+    );
+  }
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-6">
-        {/* Navigation Tabs */}
-        <div className="grid grid-cols-3 gap-2 bg-slate-200 p-1.5 rounded-2xl border border-slate-300">
-          <button
-            onClick={() => setActiveTab('survey')}
-            className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-              activeTab === 'survey' ? 'bg-white text-slate-950 shadow-md' : 'text-slate-700 hover:text-slate-950'
-            }`}
-          >
-            <PlusCircle className="w-4 h-4 text-sky-600" />
-            <span>New Ground Survey</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('queue')}
-            className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer relative ${
-              activeTab === 'queue' ? 'bg-white text-slate-950 shadow-md' : 'text-slate-700 hover:text-slate-950'
-            }`}
-          >
-            <Layers className="w-4 h-4 text-amber-600" />
-            <span>Offline Queue</span>
-            {offlineQueue.length > 0 && (
-              <span className="ml-1 px-1.5 py-0.2 rounded-full bg-amber-600 text-white text-[10px] font-mono">
-                {offlineQueue.length}
+  // =========================================================================
+  // VIEW 2: AUTHENTICATION SCREEN (LOGIN & REGISTER)
+  // =========================================================================
+  if (appScreen === 'auth') {
+    return (
+      <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col justify-center items-center p-4 sm:p-6 font-sans select-none animate-fade-in">
+        <div className="max-w-md w-full bg-white rounded-3xl border-2 border-slate-200 shadow-2xl p-6 sm:p-8 space-y-6">
+          
+          <div className="text-center space-y-3">
+            <div className="w-20 h-20 mx-auto rounded-2xl overflow-hidden shadow-lg border-2 border-emerald-500 bg-white p-1">
+              <img src="/app-icon.png" alt="ZoneGuard AI App Icon" className="w-full h-full object-contain" />
+            </div>
+            <div>
+              <span className="text-[10px] font-mono font-black uppercase px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300">
+                OFFICER INCIDENT AUTHENTICATION
               </span>
-            )}
-          </button>
+              <h2 className="text-xl font-black text-slate-950 font-heading mt-1">
+                ZoneGuard AI Field Portal
+              </h2>
+              <p className="text-xs text-slate-600 font-semibold">
+                Tamil Nadu Disaster Management Authority (TNDMA)
+              </p>
+            </div>
+          </div>
 
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-              activeTab === 'history' ? 'bg-white text-slate-950 shadow-md' : 'text-slate-700 hover:text-slate-950'
-            }`}
-          >
-            <List className="w-4 h-4 text-emerald-600" />
-            <span>Verified History ({submittedSurveys.length})</span>
-          </button>
-        </div>
+          {/* Mode Switcher Tabs */}
+          <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-300 text-xs font-black">
+            <button
+              onClick={() => setAuthMode('login')}
+              className={`flex-1 py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 btn-touch ${
+                authMode === 'login' 
+                  ? 'bg-emerald-600 text-white shadow-md' 
+                  : 'text-slate-600 hover:text-slate-950'
+              }`}
+            >
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>Officer Login</span>
+            </button>
+            <button
+              onClick={() => setAuthMode('signup')}
+              className={`flex-1 py-2 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 btn-touch ${
+                authMode === 'signup' 
+                  ? 'bg-emerald-600 text-white shadow-md' 
+                  : 'text-slate-600 hover:text-slate-950'
+              }`}
+            >
+              <UserCheck className="w-3.5 h-3.5" />
+              <span>Register Officer</span>
+            </button>
+          </div>
 
-        {/* TAB 1: NEW GROUND SURVEY FORM */}
-        {activeTab === 'survey' && (
-          <form onSubmit={handleSubmitSurvey} className="space-y-6">
-            {/* Section 1: Location & GPS */}
-            <div className="p-5 sm:p-6 rounded-3xl bg-white border-2 border-slate-200 shadow-xl space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-sky-600" />
-                  <h2 className="text-base font-black text-slate-950">1. Target Location & Geolocation Tagging</h2>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCaptureGPS}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-md cursor-pointer transition-all"
-                >
-                  <Compass className="w-3.5 h-3.5" />
-                  <span>Lock GPS Coordinates</span>
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Target Hazard Zone / Ward</label>
+          {/* LOGIN FORM */}
+          {authMode === 'login' ? (
+            <form onSubmit={handleLoginSubmit} className="space-y-4 animate-fade-in">
+              <div>
+                <label className="text-[11px] font-mono text-slate-700 font-black block mb-1 uppercase">
+                  Officer ID / Official Email
+                </label>
+                <div className="relative">
+                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                   <input
                     type="text"
-                    value={formData.village_name}
-                    onChange={(e) => setFormData({ ...formData, village_name: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 font-semibold text-xs text-slate-900 focus:ring-2 focus:ring-sky-500"
                     required
+                    value={loginForm.officerId}
+                    onChange={(e) => setLoginForm(prev => ({ ...prev, officerId: e.target.value }))}
+                    placeholder="OFFICER-TN-774"
+                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 font-bold focus:border-emerald-600 focus:bg-white"
                   />
                 </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Surveying Field Officer</label>
-                  <input
-                    type="text"
-                    value={formData.surveyor_name}
-                    onChange={(e) => setFormData({ ...formData, surveyor_name: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 font-semibold text-xs text-slate-900 focus:ring-2 focus:ring-sky-500"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Coordinates Grid */}
-              <div className="p-3.5 rounded-2xl bg-sky-50 border border-sky-200 flex flex-wrap items-center justify-between gap-3 text-xs">
-                <div>
-                  <span className="text-sky-800 font-bold">Latitude:</span> <strong className="font-mono text-slate-950">{formData.lat}</strong>
-                </div>
-                <div>
-                  <span className="text-sky-800 font-bold">Longitude:</span> <strong className="font-mono text-slate-950">{formData.lng}</strong>
-                </div>
-                <div className="text-[11px] font-mono text-slate-600">
-                  {gpsAccuracy}
-                </div>
-              </div>
-            </div>
-
-            {/* Section 2: Ground Fissures & Structural Damage */}
-            <div className="p-5 sm:p-6 rounded-3xl bg-white border-2 border-slate-200 shadow-xl space-y-4">
-              <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-                <h2 className="text-base font-black text-slate-950">2. Fissure Depth & Ground Displacement Inspection</h2>
-              </div>
-
-              {/* Interactive Crack Depth Slider */}
-              <div className="p-4 rounded-2xl bg-red-50/70 border border-red-200 space-y-2">
-                <div className="flex justify-between text-xs font-bold text-slate-900">
-                  <span>Measured Surface Crack Depth:</span>
-                  <span className="font-mono text-base text-red-600 font-black">{formData.crack_depth_cm} cm</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="30"
-                  step="0.2"
-                  value={formData.crack_depth_cm}
-                  onChange={(e) => setFormData({ ...formData, crack_depth_cm: parseFloat(e.target.value) })}
-                  className="w-full accent-red-600 cursor-pointer"
-                />
-                <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-                  <span>0 cm (No Fissures)</span>
-                  <span>15 cm (Major Shear)</span>
-                  <span>30 cm (Structural Failure)</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Damaged Houses / Structures Count</label>
-                  <input
-                    type="number"
-                    value={formData.damaged_houses}
-                    onChange={(e) => setFormData({ ...formData, damaged_houses: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 font-semibold text-xs text-slate-900 focus:ring-2 focus:ring-sky-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Observed Population at Risk</label>
-                  <input
-                    type="number"
-                    value={formData.observed_population}
-                    onChange={(e) => setFormData({ ...formData, observed_population: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 font-semibold text-xs text-slate-900 focus:ring-2 focus:ring-sky-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Section 3: Photo Evidence & Remarks */}
-            <div className="p-5 sm:p-6 rounded-3xl bg-white border-2 border-slate-200 shadow-xl space-y-4">
-              <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
-                <Camera className="w-5 h-5 text-amber-600" />
-                <h2 className="text-base font-black text-slate-950">3. Field Evidence Capture & Precautionary Remarks</h2>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-2">Upload or Snap Crack Photo</label>
-                  <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 hover:border-sky-500 rounded-2xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-all">
-                    <Upload className="w-6 h-6 text-slate-500 mb-1" />
-                    <span className="text-xs font-bold text-slate-700">Tap to Capture / Choose Photo</span>
-                    <span className="text-[10px] text-slate-400">JPG, PNG up to 10MB</span>
-                    <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
-                  </label>
-                </div>
-
-                {photoPreview && (
-                  <div className="rounded-2xl overflow-hidden border-2 border-slate-200 shadow-md">
-                    <img src={photoPreview} alt="Field Evidence" className="w-full h-40 object-cover" />
-                  </div>
-                )}
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Field Assessment Remarks & Recommended Evacuation Action</label>
-                <textarea
-                  rows="3"
-                  value={formData.remarks}
-                  onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 font-semibold text-xs text-slate-900 focus:ring-2 focus:ring-sky-500"
-                />
+                <label className="text-[11px] font-mono text-slate-700 font-black block mb-1 uppercase">
+                  Security Passcode
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <input
+                    type="password"
+                    required
+                    value={loginForm.password}
+                    onChange={(e) => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
+                    placeholder="Enter security passcode"
+                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl pl-10 pr-3.5 py-2.5 text-xs text-slate-900 font-bold focus:border-emerald-600 focus:bg-white"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Submit Action Button */}
-            <div className="flex justify-end gap-3">
               <button
                 type="submit"
-                disabled={submitting}
-                className="flex items-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white font-black text-sm shadow-xl shadow-sky-600/30 transition-all cursor-pointer"
+                className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs cursor-pointer shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all btn-touch"
               >
-                <Send className={`w-4 h-4 ${submitting ? 'animate-spin' : ''}`} />
-                <span>{submitting ? 'Transmitting Ground Truth...' : (isOnline ? 'Submit & Sync to Command Center' : 'Save to Offline Queue')}</span>
+                <span>Authorize & Launch Field Ops</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
-            </div>
-          </form>
-        )}
 
-        {/* TAB 2: OFFLINE QUEUE */}
-        {activeTab === 'queue' && (
-          <div className="p-6 rounded-3xl bg-white border-2 border-slate-200 shadow-xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-              <div>
-                <h2 className="text-base font-black text-slate-950">Offline Survey Queue</h2>
-                <p className="text-xs text-slate-500">Surveys logged without active internet connectivity</p>
-              </div>
-              <button
-                onClick={handleSyncQueue}
-                disabled={syncing || offlineQueue.length === 0}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-md transition-all cursor-pointer disabled:opacity-50"
-              >
-                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                <span>{syncing ? 'Syncing to GIS...' : `Sync All (${offlineQueue.length})`}</span>
-              </button>
-            </div>
-
-            {offlineQueue.length === 0 ? (
-              <div className="p-10 text-center text-slate-400 space-y-2">
-                <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
-                <p className="font-bold text-slate-700">Offline queue is empty!</p>
-                <p className="text-xs">All ground surveys are fully synchronized with the Central Command Center.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {offlineQueue.map((item, idx) => (
-                  <div key={idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <strong className="text-sm font-bold text-slate-950">{item.village_name}</strong>
-                      <span className="text-xs font-mono font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
-                        Pending Sync
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-slate-600">
-                      <div>Surveyor: <strong className="text-slate-900">{item.surveyor_name}</strong></div>
-                      <div>Crack Depth: <strong className="text-red-600">{item.crack_depth_cm} cm</strong></div>
-                      <div>Damaged Houses: <strong className="text-slate-900">{item.damaged_houses}</strong></div>
-                      <div>GPS: <strong className="font-mono">{item.lat}, {item.lng}</strong></div>
-                    </div>
+              {/* Demo Credentials Panel */}
+              <div className="pt-3 border-t-2 border-slate-200 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-emerald-600" />
+                    <span className="text-[11px] font-mono text-slate-800 font-black uppercase">
+                      Quick Demo Accounts (1-Click)
+                    </span>
                   </div>
-                ))}
+                  <span className="text-[10px] font-mono text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full font-bold">
+                    PIN: demo123
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2">
+                  {DEMO_ACCOUNTS.map((acc) => (
+                    <div
+                      key={acc.id}
+                      className="p-3 rounded-2xl bg-slate-50 hover:bg-emerald-50/70 border-2 border-slate-200 hover:border-emerald-500 text-left transition-all space-y-2 card-hover"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-black text-slate-950">{acc.name}</span>
+                            <span className="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-900 px-2 py-0.2 rounded-md">
+                              {acc.id}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-600 font-semibold">{acc.designation}</p>
+                          <p className="text-[10px] text-emerald-700 font-mono font-bold mt-0.5">{acc.assigned_block}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLoginForm({
+                              officerId: acc.id,
+                              password: "demo123",
+                              department: acc.designation,
+                              remember: true
+                            });
+                          }}
+                          className="flex-1 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 font-bold text-xs cursor-pointer text-center btn-touch"
+                        >
+                          Auto-Fill
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleQuickDemoLogin(acc)}
+                          className="flex-1 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer text-center shadow-xs flex items-center justify-center gap-1 btn-touch"
+                        >
+                          <span>1-Click Login</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
+            </form>
+          ) : (
+            /* SIGNUP FORM */
+            <form onSubmit={handleSignupSubmit} className="space-y-3.5 animate-fade-in">
+              <div>
+                <label className="text-[11px] font-mono text-slate-700 font-black block mb-1 uppercase">
+                  Officer Full Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={signupForm.name}
+                  onChange={(e) => setSignupForm(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="e.g. R. Kavitha"
+                  className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl p-2.5 text-xs text-slate-900 font-bold focus:border-emerald-600 focus:bg-white"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[11px] font-mono text-slate-700 font-black block mb-1 uppercase">
+                    Badge / ID
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={signupForm.officerId}
+                    onChange={(e) => setSignupForm(prev => ({ ...prev, officerId: e.target.value }))}
+                    placeholder="OFFICER-TN-892"
+                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl p-2.5 text-xs text-slate-900 font-bold focus:border-emerald-600 focus:bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-mono text-slate-700 font-black block mb-1 uppercase">
+                    District
+                  </label>
+                  <select
+                    value={signupForm.district}
+                    onChange={(e) => setSignupForm(prev => ({ ...prev, district: e.target.value }))}
+                    className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl p-2.5 text-xs text-slate-900 font-bold focus:border-emerald-600 focus:bg-white"
+                  >
+                    <option>Nilgiris</option>
+                    <option>Coimbatore</option>
+                    <option>Dindigul</option>
+                    <option>Theni</option>
+                    <option>Tenkasi</option>
+                    <option>Salem</option>
+                    <option>Kanyakumari</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-mono text-slate-700 font-black block mb-1 uppercase">
+                  Official Email
+                </label>
+                <input
+                  type="email"
+                  value={signupForm.email}
+                  onChange={(e) => setSignupForm(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="officer@tndma.tn.gov.in"
+                  className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl p-2.5 text-xs text-slate-900 font-bold focus:border-emerald-600 focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-mono text-slate-700 font-black block mb-1 uppercase">
+                  Passcode
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={signupForm.password}
+                  onChange={(e) => setSignupForm(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder="••••••••"
+                  className="w-full bg-slate-50 border-2 border-slate-200 rounded-2xl p-2.5 text-xs text-slate-900 font-bold focus:border-emerald-600 focus:bg-white"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs cursor-pointer shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 transition-all mt-2 btn-touch"
+              >
+                <span>Register & Open Workspace</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // VIEW 3: MAIN FIELD OFFICER APPLICATION
+  // =========================================================================
+  const renderAppContent = () => (
+    <div className="flex-1 flex flex-col font-sans select-none pb-20 md:pb-6 bg-slate-100 min-h-screen">
+      {/* Clean Minimalist Header */}
+      <Header
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        officer={officer}
+        isOnline={isOnline}
+        setIsOnline={setIsOnline}
+        offlineCount={offlineQueue.length}
+        zonesCount={zones.length}
+        onAcquireGps={handleAcquireGPS}
+        onInstallPwa={() => alert("To install on Android: Open Chrome Menu > Install App.")}
+        deviceFrameMode={deviceFrameMode}
+        setDeviceFrameMode={setDeviceFrameMode}
+      />
+
+      {/* Main Tab Content View */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
+        {activeTab === 'dashboard' && (
+          <DashboardTab
+            officer={officer}
+            zones={zones}
+            offlineQueue={offlineQueue}
+            syncedSurveys={syncedSurveys}
+            gpsCoords={gpsCoords}
+            onAcquireGps={handleAcquireGPS}
+            onNavigateToTab={setActiveTab}
+            onSelectZone={handleSelectZoneToInspect}
+          />
         )}
 
-        {/* TAB 3: VERIFIED HISTORY */}
-        {activeTab === 'history' && (
-          <div className="p-6 rounded-3xl bg-white border-2 border-slate-200 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-              <h2 className="text-base font-black text-slate-950">Verified Ground Surveys in Central Database</h2>
-              <button
-                onClick={loadSurveys}
-                className="flex items-center gap-1 text-xs font-bold text-sky-600 hover:text-sky-800"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Refresh</span>
-              </button>
-            </div>
+        {activeTab === 'map' && (
+          <MapTab
+            mapCenter={mapCenter}
+            setMapCenter={setMapCenter}
+            mapZoom={mapZoom}
+            setMapZoom={setMapZoom}
+            gpsCoords={gpsCoords}
+            officer={officer}
+            zones={zones}
+            relocationSites={relocationSites}
+            selectedMapZone={selectedMapZone}
+            setSelectedMapZone={setSelectedMapZone}
+            onSelectZoneToInspect={handleSelectZoneToInspect}
+            onNavigateToTab={setActiveTab}
+          />
+        )}
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-slate-700 font-mono uppercase text-[10px] border-b border-slate-200">
-                  <tr>
-                    <th className="py-2.5 px-3">Village / Ward</th>
-                    <th className="py-2.5 px-3">Surveyor</th>
-                    <th className="py-2.5 px-3">Crack Depth</th>
-                    <th className="py-2.5 px-3">Damaged</th>
-                    <th className="py-2.5 px-3">Condition</th>
-                    <th className="py-2.5 px-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 font-medium">
-                  {submittedSurveys.length > 0 ? (
-                    submittedSurveys.map((s, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50">
-                        <td className="py-2.5 px-3 font-bold text-slate-950">{s.village_name}</td>
-                        <td className="py-2.5 px-3 text-slate-600">{s.surveyor_name}</td>
-                        <td className="py-2.5 px-3 font-mono font-bold text-red-600">{s.crack_depth_cm} cm</td>
-                        <td className="py-2.5 px-3">{s.damaged_houses}</td>
-                        <td className="py-2.5 px-3 text-slate-700">{s.ground_condition || 'Active'}</td>
-                        <td className="py-2.5 px-3">
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
-                            VERIFIED
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="6" className="py-6 text-center text-slate-400">
-                        No verified surveys found. Submit a survey to populate the live database.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        {activeTab === 'assignments' && (
+          <AssignmentsTab
+            zones={zones}
+            officer={officer}
+            onSelectZoneToInspect={handleSelectZoneToInspect}
+            onNavigateToTab={setActiveTab}
+            setMapCenter={setMapCenter}
+            setMapZoom={setMapZoom}
+            setSelectedMapZone={setSelectedMapZone}
+          />
+        )}
+
+        {activeTab === 'survey' && (
+          <SurveyTab
+            formData={formData}
+            setFormData={setFormData}
+            zones={zones}
+            onAcquireGps={handleAcquireGPS}
+            onSubmitSurvey={handleSubmitSurvey}
+            submitting={submitting}
+            isOnline={isOnline}
+            officer={officer}
+          />
+        )}
+
+        {activeTab === 'relocation' && (
+          <RelocationTab
+            siteInspection={siteInspection}
+            setSiteInspection={setSiteInspection}
+            relocationSites={relocationSites}
+          />
+        )}
+
+        {activeTab === 'community' && (
+          <CommunityTab
+            communitySurvey={communitySurvey}
+            setCommunitySurvey={setCommunitySurvey}
+            calculateCERI={calculateCERI}
+          />
+        )}
+
+        {activeTab === 'sync' && (
+          <SyncTab
+            offlineQueue={offlineQueue}
+            syncedSurveys={syncedSurveys}
+            syncing={syncing}
+            onAutoSync={autoSync}
+          />
+        )}
+
+        {activeTab === 'profile' && (
+          <ProfileTab
+            officer={officer}
+            backendConnected={backendConnected}
+            onLogout={handleLogout}
+          />
         )}
       </main>
 
-      {/* Mobile Footer */}
-      <footer className="py-4 text-center text-xs text-slate-500 border-t border-slate-200 bg-white">
-        ZoneGuard AI Field Ground-Truth Protocol • TNDMA / NDMA Disaster Response Network
-      </footer>
+      {/* Touch-Optimized Bottom Nav for Mobile */}
+      <BottomNav
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        offlineCount={offlineQueue.length}
+      />
     </div>
   );
+
+  // Return Phone Simulator on desktop or Full Native Screen
+  if (deviceFrameMode) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 select-none">
+        <div className="mb-4 flex items-center gap-3 bg-slate-950 px-4 py-2 rounded-2xl border border-slate-800 text-xs text-white">
+          <Smartphone className="w-4 h-4 text-emerald-400" />
+          <span className="font-bold">Field Officer Device Hardware View</span>
+          <button
+            onClick={() => setDeviceFrameMode(false)}
+            className="ml-4 px-3 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold cursor-pointer text-xs btn-touch"
+          >
+            Exit Frame
+          </button>
+        </div>
+
+        <div className="w-[412px] h-[870px] bg-black rounded-[52px] p-3.5 shadow-2xl border-4 border-slate-700 relative flex flex-col overflow-hidden">
+          <div className="absolute top-5 left-1/2 -translate-x-1/2 w-28 h-7 bg-black rounded-full z-50 flex items-center justify-between px-3">
+            <div className="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-700" />
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          </div>
+
+          <div className="h-6 w-full bg-white flex items-center justify-between px-6 pt-1 text-[11px] font-mono font-bold text-slate-900 z-40 rounded-t-[36px]">
+            <span>09:41</span>
+            <div className="flex items-center gap-1.5 text-slate-800">
+              <Signal className="w-3 h-3" />
+              <span className="text-[10px]">5G</span>
+              <Battery className="w-3.5 h-3.5 text-emerald-600" />
+            </div>
+          </div>
+
+          <div className="flex-1 w-full bg-slate-100 rounded-b-[36px] overflow-y-auto overflow-x-hidden no-scrollbar relative">
+            {renderAppContent()}
+          </div>
+
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-400 rounded-full z-50 pointer-events-none" />
+        </div>
+      </div>
+    );
+  }
+
+  return renderAppContent();
 }

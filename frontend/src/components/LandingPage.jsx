@@ -75,15 +75,12 @@ export default function LandingPage({ onLaunch, onExploreRedZones, stats }) {
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-[#f8fafc] text-slate-900 flex flex-col justify-between">
-      {/* Hero Section */}
       <section className="relative pt-12 pb-16 px-6 max-w-7xl mx-auto text-center overflow-hidden">
-        {/* Top Pills */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-red-100 border border-red-300 text-red-800 text-xs font-black uppercase tracking-wider mb-6 shadow-sm">
           <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping" />
           TNDMA DISASTER DECISION SUPPORT PLATFORM (TAMIL NADU)
         </div>
 
-        {/* Hero Title */}
         <h1 className="font-heading text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight max-w-4xl mx-auto leading-tight text-slate-950">
           From Red-Zone Hazard Detection <br />
           to <span className="bg-gradient-to-r from-red-600 via-amber-500 to-emerald-600 bg-clip-text text-transparent">
@@ -95,7 +92,6 @@ export default function LandingPage({ onLaunch, onExploreRedZones, stats }) {
           AI-powered multi-hazard intelligence for proactive disaster risk reduction, Copernicus Sentinel-1 PSInSAR ground deformation tracking, and evidence-based population relocation.
         </p>
 
-        {/* Action Buttons */}
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <button
             onClick={onLaunch}
@@ -114,7 +110,6 @@ export default function LandingPage({ onLaunch, onExploreRedZones, stats }) {
           </button>
         </div>
 
-        {/* Real-time District Summary Banner */}
         <div className="mt-12 p-6 rounded-3xl bg-white border-2 border-slate-200 max-w-5xl mx-auto shadow-xl">
           <div className="text-xs uppercase tracking-wider text-slate-700 font-mono font-black mb-4 flex items-center justify-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -124,7 +119,7 @@ export default function LandingPage({ onLaunch, onExploreRedZones, stats }) {
             <div className="p-3.5 rounded-2xl bg-red-50 border-2 border-red-200 shadow-sm">
               <div className="text-[11px] font-bold text-red-800 uppercase font-mono">High Risk Zones</div>
               <div className="text-2xl font-black text-red-600 mt-1">{stats?.cards?.high_risk_zones || 27}</div>
-              <div className="text-[10px] font-bold text-red-700">🔴 {stats?.cards?.critical_zones || 7} Critical</div>
+              <div className="text-[10px] font-bold text-red-700">{stats?.cards?.critical_zones || 7} Critical</div>
             </div>
             <div className="p-3.5 rounded-2xl bg-amber-50 border-2 border-amber-200 shadow-sm">
               <div className="text-[11px] font-bold text-amber-800 uppercase font-mono">Population at Risk</div>
@@ -139,7 +134,7 @@ export default function LandingPage({ onLaunch, onExploreRedZones, stats }) {
             <div className="p-3.5 rounded-2xl bg-emerald-50 border-2 border-emerald-200 shadow-sm">
               <div className="text-[11px] font-bold text-emerald-800 uppercase font-mono">Suitable Sites</div>
               <div className="text-2xl font-black text-emerald-600 mt-1">{stats?.cards?.suitable_sites || 12}</div>
-              <div className="text-[10px] font-bold text-emerald-700">✅ ECC Validated</div>
+              <div className="text-[10px] font-bold text-emerald-700">ECC Validated</div>
             </div>
             <div className="p-3.5 rounded-2xl bg-red-50 border-2 border-red-200 shadow-sm">
               <div className="text-[11px] font-bold text-red-800 uppercase font-mono">Deformation Alerts</div>
@@ -155,7 +150,6 @@ export default function LandingPage({ onLaunch, onExploreRedZones, stats }) {
         </div>
       </section>
 
-      {/* 6 Core Pillars */}
       <section className="py-12 px-6 max-w-7xl mx-auto w-full">
         <div className="text-center mb-10">
           <h2 className="text-2xl sm:text-3xl font-black text-slate-950">
@@ -192,7 +186,6 @@ export default function LandingPage({ onLaunch, onExploreRedZones, stats }) {
         </div>
       </section>
 
-      {/* Decision Workflow Preview Banner */}
       <section className="py-7 px-6 bg-white border-t-2 border-slate-200 text-center shadow-md">
         <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-2 text-xs font-mono font-black">
           <span className="px-3 py-1.5 rounded-xl bg-red-100 text-red-800 border border-red-300 shadow-sm">1. DETECT (Sentinel-1)</span>

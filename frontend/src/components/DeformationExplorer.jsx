@@ -74,12 +74,12 @@ export default function DeformationExplorer() {
       const validPoints = Array.isArray(ptsData) && ptsData.length > 0 
         ? ptsData 
         : [
-            { point_code: "PS-014-01", velocity_mm_yr: 18.6, status: "Accelerating", coherence: 0.88, zone_code: "ZONE-RZ-014", orbit_track: "Track 129 Descending" },
-            { point_code: "PS-014-02", velocity_mm_yr: 16.4, status: "Accelerating", coherence: 0.85, zone_code: "ZONE-RZ-014", orbit_track: "Track 129 Descending" },
-            { point_code: "PS-001-01", velocity_mm_yr: 24.5, status: "Accelerating", coherence: 0.91, zone_code: "ZONE-RZ-001", orbit_track: "Track 042 Ascending" },
-            { point_code: "PS-021-01", velocity_mm_yr: 26.8, status: "Accelerating", coherence: 0.89, zone_code: "ZONE-RZ-021", orbit_track: "Track 129 Descending" },
-            { point_code: "PS-002-01", velocity_mm_yr: 12.4, status: "Active", coherence: 0.82, zone_code: "ZONE-RZ-002", orbit_track: "Track 129 Descending" },
-            { point_code: "PS-007-01", velocity_mm_yr: 4.8, status: "Stable", coherence: 0.78, zone_code: "ZONE-RZ-007", orbit_track: "Track 129 Descending" }
+            { point_code: "PS-TN-001-01", velocity_mm_yr: 18.6, status: "Accelerating", coherence: 0.88, zone_code: "ZONE-TN-001", orbit_track: "Sentinel-1 Track 129 Descending" },
+            { point_code: "PS-TN-001-02", velocity_mm_yr: 16.4, status: "Accelerating", coherence: 0.85, zone_code: "ZONE-TN-001", orbit_track: "Sentinel-1 Track 129 Descending" },
+            { point_code: "PS-TN-008-01", velocity_mm_yr: 24.5, status: "Accelerating", coherence: 0.91, zone_code: "ZONE-TN-008", orbit_track: "Sentinel-1 Track 129 Descending" },
+            { point_code: "PS-TN-020-01", velocity_mm_yr: 26.8, status: "Accelerating", coherence: 0.89, zone_code: "ZONE-TN-020", orbit_track: "Sentinel-1 Track 129 Descending" },
+            { point_code: "PS-TN-012-01", velocity_mm_yr: 15.4, status: "Active", coherence: 0.82, zone_code: "ZONE-TN-012", orbit_track: "Sentinel-1 Track 129 Descending" },
+            { point_code: "PS-TN-023-01", velocity_mm_yr: 15.8, status: "Active", coherence: 0.78, zone_code: "ZONE-TN-023", orbit_track: "Sentinel-1 Track 129 Descending" }
           ];
 
       setPoints(validPoints);
@@ -346,7 +346,7 @@ export default function DeformationExplorer() {
 
                     <div className="flex items-center justify-between mt-2">
                       <div className="text-xs text-slate-700 font-semibold truncate max-w-[200px]">
-                        {pt.zone_code || 'ZONE-RZ-014 (Coonoor Ghats)'}
+                        {pt.zone_code || 'ZONE-TN-001 (Coonoor Ghats, TN)'}
                       </div>
                       <div className="font-mono text-sm font-black text-red-600">
                         +{pt.velocity_mm_yr} <span className="text-[10px] text-slate-500 font-normal">mm/yr</span>
@@ -588,7 +588,7 @@ export default function DeformationExplorer() {
               By combining <strong>Sentinel-1 SAR</strong> (radar phase displacement), <strong>ISRO Cartosat DEM</strong> (gravitational shear slope), and <strong>Landsat-8/9 LULC</strong> (surface vegetative binding), ZoneGuard AI achieves a <strong>94.8% susceptibility prediction accuracy</strong> for early disaster mitigation.
             </p>
             <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-xs space-y-2 text-emerald-950">
-              <div className="font-black">✅ Multi-Satellite Fusion Status:</div>
+              <div className="font-black">Multi-Satellite Fusion Status:</div>
               <div className="grid grid-cols-2 gap-2 text-[11px] font-semibold">
                 <div>• Sentinel-1 SAR: <strong className="text-emerald-700">Calibrated</strong></div>
                 <div>• Cartosat DEM: <strong className="text-emerald-700">Active (10m)</strong></div>

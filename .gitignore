@@ -12,13 +12,22 @@ backend/__pycache__/
 backend/*/__pycache__/
 backend/*/*/__pycache__/
 
-# Production Build
+# Production Builds
 dist/
 build/
 frontend/dist/
+field-portal/dist/
 
-# Logs & DB
+# Android Build & Gradle
+field-portal/android/.gradle/
+field-portal/android/build/
+field-portal/android/app/build/
+field-portal/android/local.properties
+field-portal/android/app/src/main/assets/public/
+
+# Logs & Databases
 *.log
+zoneguard.db
 backend/zoneguard.db
 *.sqlite3
 

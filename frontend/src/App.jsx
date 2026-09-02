@@ -11,8 +11,8 @@ import ShapModal from './components/ShapModal';
 import DecisionReportModal from './components/DecisionReportModal';
 import AlertsModal from './components/AlertsModal';
 import { api } from './utils/api';
+import { AlertTriangle } from 'lucide-react';
 
-// Error Boundary Component to prevent white/black screen crashes
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -24,7 +24,7 @@ class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("ZoneGuard Component Error Caught:", error, errorInfo);
+    console.error("ErrorBoundary caught:", error, errorInfo);
   }
 
   componentDidUpdate(prevProps) {
@@ -37,8 +37,8 @@ class ErrorBoundary extends Component {
     if (this.state.hasError) {
       return (
         <div className="p-8 max-w-xl mx-auto my-12 bg-white rounded-3xl border-2 border-red-300 shadow-2xl text-center space-y-4 text-slate-900">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-red-100 flex items-center justify-center text-red-600 font-bold text-2xl">
-            ⚠️
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-red-100 flex items-center justify-center text-red-600 font-bold">
+            <AlertTriangle className="w-7 h-7" />
           </div>
           <h2 className="text-xl font-black font-heading text-slate-950">View Rendering Notice</h2>
           <p className="text-xs text-slate-600 leading-relaxed font-medium">
@@ -72,24 +72,19 @@ class ErrorBoundary extends Component {
 }
 
 export default function App() {
-  // Navigation & Role State
-  const [currentTab, setCurrentTab] = useState('landing'); // 'landing', 'command-center', 'deformation', 'capacity', 'relocation', 'analytics', 'field-app', 'methodology', 'data-mgmt'
-  const [currentRole, setCurrentRole] = useState('ADMIN'); // 'ADMIN', 'FIELD_OFFICER', 'ANALYST'
-
-  // Data State
+  const [currentTab, setCurrentTab] = useState('landing');
+  const [currentRole, setCurrentRole] = useState('ADMIN');
   const [stats, setStats] = useState(null);
   const [layersData, setLayersData] = useState(null);
   const [alerts, setAlerts] = useState([]);
   const [selectedZone, setSelectedZone] = useState(null);
 
-  // Modals
   const [shapModalOpen, setShapModalOpen] = useState(false);
   const [shapData, setShapData] = useState(null);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportData, setReportData] = useState(null);
   const [alertsModalOpen, setAlertsModalOpen] = useState(false);
 
-  // Initial Data Fetch
   useEffect(() => {
     loadInitialData();
   }, []);
@@ -109,10 +104,9 @@ export default function App() {
     }
   };
 
-  // Open SHAP Explainability Modal
   const handleOpenShap = async (zoneParam) => {
     try {
-      const code = typeof zoneParam === 'string' ? zoneParam : zoneParam?.code || 'ZONE-RZ-014';
+      const code = typeof zoneParam === 'string' ? zoneParam : zoneParam?.code || 'ZONE-TN-001';
       const matchedZone = typeof zoneParam === 'object' && zoneParam?.name 
         ? zoneParam 
         : layersData?.red_zones?.features?.find(f => f.properties.code === code)?.properties || { code, name: code };
@@ -123,17 +117,16 @@ export default function App() {
       setShapModalOpen(true);
     } catch (e) {
       console.error("SHAP load error:", e);
-      const code = typeof zoneParam === 'string' ? zoneParam : zoneParam?.code || 'ZONE-RZ-014';
+      const code = typeof zoneParam === 'string' ? zoneParam : zoneParam?.code || 'ZONE-TN-001';
       setShapData(null);
       setSelectedZone({ code });
       setShapModalOpen(true);
     }
   };
 
-  // Open Decision Report Modal
   const handleOpenReport = async (zoneCode) => {
     try {
-      const rep = await api.getDecisionReport(zoneCode || 'ZONE-RZ-014');
+      const rep = await api.getDecisionReport(zoneCode || 'ZONE-TN-001');
       setReportData(rep);
       setReportModalOpen(true);
     } catch (e) {
@@ -141,7 +134,6 @@ export default function App() {
     }
   };
 
-  // Handle Dismiss Alert
   const handleDismissAlert = async (id) => {
     try {
       await api.dismissAlert(id);
@@ -151,13 +143,11 @@ export default function App() {
     }
   };
 
-  // Handle Reset Data
   const handleResetData = async () => {
     await api.resetSeedData();
     await loadInitialData();
   };
 
-  // Switch role and update view if needed
   const handleRoleChange = async (newRole) => {
     setCurrentRole(newRole);
     if (newRole === 'FIELD_OFFICER') {
@@ -171,7 +161,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-sans">
-      {/* Top Navigation */}
       <Navbar
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
@@ -182,7 +171,6 @@ export default function App() {
         onOpenAlerts={() => setAlertsModalOpen(true)}
       />
 
-      {/* Main View Router */}
       <main className="flex-1">
         <ErrorBoundary currentTab={currentTab} onResetTab={setCurrentTab}>
           {currentTab === 'landing' && (
@@ -200,7 +188,7 @@ export default function App() {
               onSelectZone={setSelectedZone}
               onOpenShap={handleOpenShap}
               onOpenReport={handleOpenReport}
-              onOpenRelocationView={(zCode) => setCurrentTab('relocation')}
+              onOpenRelocationView={() => setCurrentTab('relocation')}
             />
           )}
 
@@ -208,7 +196,7 @@ export default function App() {
             <RedZoneExplorer
               onOpenShap={handleOpenShap}
               onOpenReport={handleOpenReport}
-              onOpenRelocationView={(zCode) => setCurrentTab('relocation')}
+              onOpenRelocationView={() => setCurrentTab('relocation')}
             />
           )}
 
@@ -225,7 +213,7 @@ export default function App() {
 
           {currentTab === 'relocation' && (
             <RelocationPlanner
-              onSelectSiteForReport={(siteCode) => handleOpenReport(selectedZone?.code || 'ZONE-RZ-014')}
+              onSelectSiteForReport={() => handleOpenReport(selectedZone?.code || 'ZONE-TN-001')}
             />
           )}
 
@@ -235,7 +223,6 @@ export default function App() {
         </ErrorBoundary>
       </main>
 
-      {/* SHAP Modal */}
       {shapModalOpen && (
         <ShapModal
           zone={selectedZone}
@@ -248,7 +235,6 @@ export default function App() {
         />
       )}
 
-      {/* Decision Report Modal */}
       {reportModalOpen && (
         <DecisionReportModal
           reportData={reportData}
@@ -256,7 +242,6 @@ export default function App() {
         />
       )}
 
-      {/* Active Alerts Modal */}
       {alertsModalOpen && (
         <AlertsModal
           alerts={alerts}

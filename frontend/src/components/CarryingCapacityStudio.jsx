@@ -27,7 +27,7 @@ export default function CarryingCapacityStudio({ onApplyToPlanner }) {
     road_access_score: 94,
     medical_score: 88,
     sanitation_score: 85,
-    target_population: 2840 // Demand from ZONE-RZ-014
+    target_population: 2840 // Demand from ZONE-TN-001 (Coonoor Ghats)
   });
 
   const [capacityResult, setCapacityResult] = useState(null);

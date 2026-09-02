@@ -87,9 +87,9 @@ export default function AnalyticsDashboard() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-black font-heading text-slate-950">National Disaster Analytics & AI Validation</h2>
+              <h2 className="text-xl font-black font-heading text-slate-950">Multi-Hazard Statistical Intelligence</h2>
               <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-300 shadow-sm">
-                Pan-India Statistical Intelligence
+                Statewide Statistical Intelligence
               </span>
             </div>
             <p className="text-xs text-slate-600 font-medium mt-0.5">

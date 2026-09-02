@@ -6,18 +6,13 @@ import {
   Compass, 
   Users, 
   BarChart3, 
-  ClipboardCheck, 
-  BookOpen, 
-  Database, 
   Bell, 
   ChevronDown, 
   UserCheck, 
   Layers,
   RotateCcw,
   Sparkles,
-  AlertOctagon,
-  Smartphone,
-  ExternalLink
+  AlertOctagon
 } from 'lucide-react';
 
 export default function Navbar({ 
@@ -33,8 +28,8 @@ export default function Navbar({
 
   const navItems = [
     { id: 'landing', label: 'Home Overview', icon: Sparkles },
-    { id: 'command-center', label: 'GIS Command Center', icon: Map, badge: 'Pan-India' },
-    { id: 'red-zones', label: 'Red Zones & Precautions', icon: AlertOctagon, badge: 'Live Situation' },
+    { id: 'command-center', label: 'GIS Command Center', icon: Map, badge: 'Tamil Nadu Multi-Hazard' },
+    { id: 'red-zones', label: 'Red Zones & Precautions', icon: AlertOctagon, badge: 'Live Auto-Identification' },
     { id: 'deformation', label: 'Satellite Ingestion Studio', icon: Activity, badge: 'SAR • DEM • LULC' },
     { id: 'capacity', label: 'Carrying Capacity', icon: Users, badge: 'Safe Quota' },
     { id: 'relocation', label: 'Safe Relocation Planner', icon: Compass, badge: 'AHP-MCDA' },
@@ -63,9 +58,7 @@ export default function Navbar({
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b-2 border-slate-200 text-slate-900 select-none shadow-md">
-      {/* Top Header Bar */}
       <div className="px-5 py-3 flex items-center justify-between border-b border-slate-100">
-        {/* Brand & District Info */}
         <div className="flex items-center gap-3.5">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-red-600 via-yellow-500 to-emerald-600 p-0.5 shadow-md flex items-center justify-center">
             <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
@@ -91,15 +84,12 @@ export default function Navbar({
           </div>
         </div>
 
-        {/* District Selector & Status Actions */}
         <div className="flex items-center gap-3.5">
-          {/* District Focus Badge */}
           <div className="hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-100 border border-slate-300 text-xs text-slate-800 font-bold shadow-sm">
             <Layers className="w-4 h-4 text-amber-600" />
             <span>District: <strong className="text-slate-950 font-black">Nilgiris - Western Ghats (TN)</strong></span>
           </div>
 
-          {/* Seed Data Reset Action */}
           <button
             onClick={onResetData}
             title="Reset District Simulation Dataset"
@@ -109,7 +99,6 @@ export default function Navbar({
             <span className="hidden sm:inline">Reset Baseline</span>
           </button>
 
-          {/* Alert Notification Center */}
           <button
             onClick={onOpenAlerts}
             className="relative p-2 rounded-xl bg-yellow-50 hover:bg-yellow-100 border border-yellow-300 text-yellow-800 transition-all cursor-pointer shadow-sm"
@@ -123,20 +112,6 @@ export default function Navbar({
             )}
           </button>
 
-          {/* Standalone Field Officer Portal Link */}
-          <a
-            href="http://localhost:5174"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-300 text-xs font-bold text-sky-800 transition-all cursor-pointer shadow-sm"
-            title="Open Dedicated Mobile Field Officer Website (Port 5174)"
-          >
-            <Smartphone className="w-3.5 h-3.5 text-sky-600" />
-            <span className="hidden lg:inline">Field App (Port 5174)</span>
-            <ExternalLink className="w-3 h-3 text-sky-500" />
-          </a>
-
-          {/* Role Switcher */}
           <div className="relative">
             <button
               onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
@@ -165,7 +140,7 @@ export default function Navbar({
                     <div className="font-bold">District Collector & DDMA Head</div>
                     <div className="text-[10px] text-slate-600">Dr. K. Senthil Nathan, IAS</div>
                   </div>
-                  {currentRole === 'ADMIN' && <span className="text-red-600 font-bold text-xs">● Active</span>}
+                  {currentRole === 'ADMIN' && <span className="text-red-600 font-bold text-xs">Active</span>}
                 </button>
 
                 <button
@@ -178,7 +153,7 @@ export default function Navbar({
                     <div className="font-bold">TNDMA Field Disaster Officer</div>
                     <div className="text-[10px] text-slate-600">R. Kavitha (Nilgiris Ground Team)</div>
                   </div>
-                  {currentRole === 'FIELD_OFFICER' && <span className="text-emerald-600 font-bold text-xs">● Active</span>}
+                  {currentRole === 'FIELD_OFFICER' && <span className="text-emerald-600 font-bold text-xs">Active</span>}
                 </button>
 
                 <button
@@ -191,7 +166,7 @@ export default function Navbar({
                     <div className="font-bold">Lead GIS & SAR Scientist</div>
                     <div className="text-[10px] text-slate-600">Dr. S. Ramanathan (TNDMA Remote Sensing)</div>
                   </div>
-                  {currentRole === 'ANALYST' && <span className="text-amber-600 font-bold text-xs">● Active</span>}
+                  {currentRole === 'ANALYST' && <span className="text-amber-600 font-bold text-xs">Active</span>}
                 </button>
               </div>
             )}
@@ -199,7 +174,6 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* Navigation Sub-bar */}
       <nav className="px-5 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-2 bg-slate-50 border-t border-slate-200 text-xs font-medium">
         {navItems.map((item) => {
           const Icon = item.icon;

@@ -10,7 +10,15 @@ Write-Host " Branch: main`n" -ForegroundColor White
 Set-Location $RootDir
 
 Write-Host "[*] Staging all files..." -ForegroundColor Yellow
-git add .
+git add -A
+
+git diff-index --quiet HEAD --
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[*] Committing updated deployment configuration..." -ForegroundColor Yellow
+    git commit -m "fix: production deployment readiness, vercel config, and native cloud support"
+} else {
+    Write-Host "[*] Working directory clean, no new commit needed." -ForegroundColor Green
+}
 
 Write-Host "[*] Latest Commit:" -ForegroundColor Yellow
 git log -1 --oneline

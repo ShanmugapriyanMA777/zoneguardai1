@@ -1,0 +1,4 @@
+backend/
+field-portal/android/
+*.db
+*.sqlite3

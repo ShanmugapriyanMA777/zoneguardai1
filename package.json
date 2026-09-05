@@ -1,0 +1,24 @@
+{
+  "name": "zoneguard-ai",
+  "version": "2.4.0",
+  "private": true,
+  "description": "National Multi-Hazard Red-Zone Mapping & Relocation Decision Support System",
+  "scripts": {
+    "build": "npm run build --prefix frontend",
+    "build:frontend": "npm run build --prefix frontend",
+    "build:field": "npm run build --prefix field-portal",
+    "start": "python backend/app/main.py",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "python -m uvicorn app.main:app --app-dir backend --reload --port 8000"
+  },
+  "keywords": [
+    "disaster-management",
+    "hazard-mapping",
+    "fastapi",
+    "react",
+    "vite",
+    "gis"
+  ],
+  "author": "ZoneGuard AI Team",
+  "license": "MIT"
+}

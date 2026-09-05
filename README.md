@@ -91,5 +91,17 @@ Open **[http://localhost:5173](http://localhost:5173)** in your browser.
 
 ---
 
+## 🌐 Production Cloud Deployment
+
+ZoneGuard AI is configured for fast, zero-configuration cloud deployment:
+
+* **Vercel (Frontend UI)**: Deploy instantly with `deploy_to_vercel.bat` or `deploy_to_vercel.ps1`.
+* **Render / Railway (FastAPI Backend)**: Native Python 3 web service via [render.yaml](file:///render.yaml) or [Procfile](file:///Procfile).
+* **Single-Server / VPS**: Pre-configured static file serving directly through FastAPI on a single port.
+
+👉 For detailed step-by-step instructions, see the **[Production Deployment Guide](file:///DEPLOYMENT.md)**.
+
+---
+
 ## 📜 License
 Developed for National Disaster Management Authorities (NDMA / TNDMA / SDRF). Distributed under the MIT License.

@@ -29,11 +29,31 @@ class Settings(BaseSettings):
 
     def __init__(self, **values):
         super().__init__(**values)
-        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-        # Check if root zoneguard.db or backend/zoneguard.db
-        root_db = os.path.join(base_dir, "zoneguard.db").replace("\\", "/")
+        
+        # 1. Normalize postgres:// to postgresql:// for SQLAlchemy 2.0 compatibility (e.g. Render, Railway, Supabase)
+        if self.DATABASE_URL and self.DATABASE_URL.startswith("postgres://"):
+            self.DATABASE_URL = self.DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+        # 2. Robust SQLite resolution across Docker, Cloud, and local environments
         if not self.DATABASE_URL or self.DATABASE_URL == "sqlite:///./zoneguard.db" or self.DATABASE_URL.startswith("sqlite:///./"):
-            self.DATABASE_URL = f"sqlite:///{root_db}"
+            backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+            root_dir = os.path.abspath(os.path.join(backend_dir, ".."))
+            candidates = [
+                os.path.join(backend_dir, "zoneguard.db"),
+                os.path.join(root_dir, "zoneguard.db"),
+                os.path.join(os.getcwd(), "zoneguard.db"),
+                os.path.join(backend_dir, "data", "zoneguard.db"),
+            ]
+            chosen_db = None
+            for cand in candidates:
+                if os.path.isfile(cand):
+                    chosen_db = cand
+                    break
+            if not chosen_db:
+                chosen_db = os.path.join(backend_dir, "zoneguard.db")
+            
+            chosen_db = os.path.abspath(chosen_db).replace("\\", "/")
+            self.DATABASE_URL = f"sqlite:///{chosen_db}"
 
     class Config:
         case_sensitive = True

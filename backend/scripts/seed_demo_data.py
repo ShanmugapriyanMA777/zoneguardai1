@@ -910,5 +910,8 @@ def seed_database():
     db.close()
     print("[SUCCESS] Comprehensive Tamil Nadu Multi-Hazard 3D Disaster Grid seeded successfully!")
 
+# Export alias for modules importing seed_all
+seed_all = seed_database
+
 if __name__ == "__main__":
     seed_database()

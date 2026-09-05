@@ -12,7 +12,15 @@ echo.
 cd /d "%~dp0"
 
 echo [*] Staging all changes...
-git add .
+git add -A
+
+git diff-index --quiet HEAD --
+if %ERRORLEVEL% NEQ 0 (
+    echo [*] Committing updated deployment configuration...
+    git commit -m "fix: production deployment readiness, vercel config, and native cloud support"
+) else (
+    echo [*] Working directory clean, no new commit needed.
+)
 
 echo [*] Current Commit Status:
 git log -1 --oneline

@@ -1,4 +1,14 @@
-const API_BASE = '/api';
+const getApiBase = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (!envUrl) return '/api';
+  const clean = envUrl.trim().replace(/\/$/, '');
+  if (clean.startsWith('http') && !clean.endsWith('/api')) {
+    return `${clean}/api`;
+  }
+  return clean;
+};
+
+const API_BASE = getApiBase();
 
 export async function fetchApi(endpoint, options = {}) {
   try {

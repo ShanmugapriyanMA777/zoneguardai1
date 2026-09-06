@@ -84,6 +84,7 @@ export default function App() {
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportData, setReportData] = useState(null);
   const [alertsModalOpen, setAlertsModalOpen] = useState(false);
+  const [autoTriggerMatch, setAutoTriggerMatch] = useState(false);
 
   useEffect(() => {
     loadInitialData();
@@ -160,7 +161,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col font-sans">
+    <div className={`text-slate-900 flex flex-col font-sans ${currentTab === 'command-center' ? 'h-screen overflow-hidden bg-white' : 'min-h-screen bg-[#f8fafc]'}`}>
       <Navbar
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
@@ -171,7 +172,7 @@ export default function App() {
         onOpenAlerts={() => setAlertsModalOpen(true)}
       />
 
-      <main className="flex-1">
+      <main className={`flex-1 min-h-0 ${currentTab === 'command-center' ? 'flex flex-col overflow-hidden relative' : ''}`}>
         <ErrorBoundary currentTab={currentTab} onResetTab={setCurrentTab}>
           {currentTab === 'landing' && (
             <LandingPage
@@ -189,6 +190,8 @@ export default function App() {
               onOpenShap={handleOpenShap}
               onOpenReport={handleOpenReport}
               onOpenRelocationView={() => setCurrentTab('relocation')}
+              autoTriggerMatch={autoTriggerMatch}
+              onClearAutoTriggerMatch={() => setAutoTriggerMatch(false)}
             />
           )}
 
@@ -228,8 +231,11 @@ export default function App() {
           zone={selectedZone}
           shapData={shapData}
           onClose={() => setShapModalOpen(false)}
-          onFindRelocation={() => {
+          onFindRelocation={(zCode) => {
             setShapModalOpen(false);
+            const targetZone = layersData?.red_zones?.features?.find(f => f.properties?.code === zCode)?.properties || selectedZone;
+            if (targetZone) setSelectedZone(targetZone);
+            setAutoTriggerMatch(true);
             setCurrentTab('command-center');
           }}
         />

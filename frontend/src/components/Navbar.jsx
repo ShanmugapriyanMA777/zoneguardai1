@@ -57,8 +57,8 @@ export default function Navbar({
   const roleInfo = getRoleLabel();
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b-2 border-slate-200 text-slate-900 select-none shadow-md">
-      <div className="px-5 py-3 flex items-center justify-between border-b border-slate-100">
+    <header className="sticky top-0 z-50 bg-white border-b border-slate-200 text-slate-900 select-none shadow-sm">
+      <div className="px-5 py-2 flex items-center justify-between border-b border-slate-200/80">
         <div className="flex items-center gap-3.5">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-red-600 via-yellow-500 to-emerald-600 p-0.5 shadow-md flex items-center justify-center">
             <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
@@ -143,18 +143,6 @@ export default function Navbar({
                   {currentRole === 'ADMIN' && <span className="text-red-600 font-bold text-xs">Active</span>}
                 </button>
 
-                <button
-                  onClick={() => handleRoleChange('FIELD_OFFICER')}
-                  className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-colors flex items-center justify-between mt-1 ${
-                    currentRole === 'FIELD_OFFICER' ? 'bg-emerald-100 text-emerald-900 font-bold border border-emerald-300' : 'hover:bg-slate-100 text-slate-800'
-                  }`}
-                >
-                  <div>
-                    <div className="font-bold">TNDMA Field Disaster Officer</div>
-                    <div className="text-[10px] text-slate-600">R. Kavitha (Nilgiris Ground Team)</div>
-                  </div>
-                  {currentRole === 'FIELD_OFFICER' && <span className="text-emerald-600 font-bold text-xs">Active</span>}
-                </button>
 
                 <button
                   onClick={() => handleRoleChange('ANALYST')}
@@ -174,7 +162,7 @@ export default function Navbar({
         </div>
       </div>
 
-      <nav className="px-5 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-2 bg-slate-50 border-t border-slate-200 text-xs font-medium">
+      <nav className="px-5 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1.5 bg-slate-50 text-xs font-medium">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;

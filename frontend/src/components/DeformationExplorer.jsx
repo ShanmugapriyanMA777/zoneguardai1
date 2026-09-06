@@ -198,21 +198,6 @@ export default function DeformationExplorer() {
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleRunSNAP}
-            disabled={processingPipeline}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-red-600 via-amber-500 to-emerald-600 hover:opacity-95 text-white text-xs font-black shadow-md transition-all cursor-pointer border border-white/40"
-          >
-            <RefreshCw className={`w-4 h-4 ${processingPipeline ? 'animate-spin' : ''}`} />
-            <span>
-              {processingPipeline 
-                ? (pipelineStage === 1 ? 'Coregistration...' : pipelineStage === 2 ? 'Phase Removal...' : pipelineStage === 3 ? 'Persistent Scatterers...' : 'Exporting LOS mm/yr...') 
-                : 'Trigger InSAR Pipeline'}
-            </span>
-          </button>
-        </div>
       </div>
 
       {/* Satellite Sensor Switcher Tabs */}

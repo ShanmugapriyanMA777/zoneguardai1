@@ -134,7 +134,7 @@ export function buildClientDecisionReport(zoneCode, siteCode = null) {
     district: "Nilgiris"
   };
 
-  // Find allocated site: if siteCode is requested, use it; otherwise check reports_by_zone or default to optimal site
+  // Find allocated site: if siteCode is requested, use it; otherwise pick optimal closest haven from sitesList
   let site = null;
   if (siteCode) {
     site = sitesList.find(s => s.code === siteCode.toUpperCase() || s.code.includes(siteCode.toUpperCase()));
@@ -144,6 +144,20 @@ export function buildClientDecisionReport(zoneCode, siteCode = null) {
     const existingSiteCode = existingRep?.relocation_allocation?.site_code;
     if (existingSiteCode) {
       site = sitesList.find(s => s.code === existingSiteCode);
+    }
+  }
+  if (!site && sitesList.length > 0) {
+    const zLat = Number(zone.center_lat || zone.centroid_lat || 11.353);
+    const zLng = Number(zone.center_lng || zone.centroid_lng || 76.795);
+    let bestDist = Infinity;
+    for (const cand of sitesList) {
+      const sLat = Number(cand.lat || 11.300);
+      const sLng = Number(cand.lng || 76.950);
+      const d = Math.hypot(sLat - zLat, sLng - zLng);
+      if (d < bestDist) {
+        bestDist = d;
+        site = cand;
+      }
     }
   }
   if (!site) {
@@ -159,7 +173,7 @@ export function buildClientDecisionReport(zoneCode, siteCode = null) {
     };
   }
 
-  // Calculate distance and travel time
+  // Calculate realistic mountain road distance and travel time
   const zLat = Number(zone.center_lat || zone.centroid_lat || 11.353);
   const zLng = Number(zone.center_lng || zone.centroid_lng || 76.795);
   const sLat = Number(site.lat || 11.300);
@@ -169,8 +183,9 @@ export function buildClientDecisionReport(zoneCode, siteCode = null) {
   const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
             Math.cos(zLat * Math.PI / 180) * Math.cos(sLat * Math.PI / 180) *
             Math.sin(dLon/2) * Math.sin(dLon/2);
-  const distKm = Math.max(4.5, Number((6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1)));
-  const transitMins = Math.max(15, Math.round((distKm / 32) * 60));
+  const directDist = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distKm = Math.max(3.8, Number((directDist * 1.35).toFixed(1)));
+  const transitMins = Math.max(12, Math.round((distKm / 32) * 60));
 
   const pop = Number(zone.population || 2840);
   const ecc = Number(site.ecc || 5600);

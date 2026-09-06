@@ -115,6 +115,72 @@ export const DEFAULT_DEFORMATION_POINTS = [
   { point_code: "PS-TN-028-01", velocity_mm_yr: 2.8, status: "Stable", coherence: 0.97, zone_code: "ZONE-TN-028 (Kolli Hills Bedrock)", orbit_track: "Sentinel-1 Track 129 Descending (C-SAR)" }
 ];
 
+// Client-side Carrying Capacity (PCC -> RCC -> ECC) assessment solver
+export function calculateClientCarryingCapacity(params = {}) {
+  const usable_area_sqm = Number(params.usable_area_sqm || 150000);
+  const min_area_per_person = Number(params.min_area_per_person || 30.0);
+  const slope_deg = Number(params.slope_deg ?? 6.8);
+  const water_score = Number(
+    params.distance_to_water_m !== undefined 
+      ? Math.max(30, Math.min(100, 100 - params.distance_to_water_m * 0.15)) 
+      : (params.water_availability_score || 88.0)
+  );
+  const road_access_score = Number(params.road_access_score ?? 94.0);
+  const medical_score = Number(params.medical_score ?? 88.0);
+  const sanitation_score = Number(params.sanitation_score ?? 85.0);
+  const target_population = Number(params.target_population ?? 2840);
+
+  const area_req = Math.max(10.0, min_area_per_person);
+
+  // 1. Physical Carrying Capacity (PCC)
+  const pcc = Math.round(usable_area_sqm / area_req);
+
+  // 2. Real Carrying Capacity (RCC)
+  // Slope correction factor: steep terrain (>5 deg) reduces buildable footprint
+  const c_slope = Math.max(0.40, 1.0 - (Math.max(0.0, slope_deg - 5.0) * 0.025));
+  const c_water = 0.70 + (water_score / 100.0) * 0.25;
+  const c_terrain = 0.92;
+  const correction_factor = Math.min(0.95, Math.max(0.35, c_slope * c_water * c_terrain));
+  const rcc = Math.round(pcc * correction_factor);
+
+  // 3. Effective Carrying Capacity (ECC)
+  const m_road = 0.70 + (road_access_score / 100.0) * 0.30;
+  const m_health = 0.75 + (medical_score / 100.0) * 0.25;
+  const m_sanitation = 0.75 + (sanitation_score / 100.0) * 0.25;
+  const management_factor = Math.min(0.95, Math.max(0.40, m_road * m_health * m_sanitation));
+  const ecc = Math.round(rcc * management_factor);
+
+  const surplus_deficit = target_population > 0 ? (ecc - target_population) : 0;
+  const isAdequate = surplus_deficit >= 0;
+  const capacity_status = isAdequate ? "ADEQUATE" : "DEFICIT";
+  const status_color = isAdequate ? "green" : "red";
+  const recommendation = isAdequate
+    ? `Capacity satisfies relocation demand with a safety buffer of +${surplus_deficit.toLocaleString()} persons.`
+    : `Site has a deficit of ${Math.abs(surplus_deficit).toLocaleString()} persons. Multi-site distribution or modular vertical relief staging required.`;
+
+  return {
+    usable_area_sqm,
+    min_area_per_person_sqm: area_req,
+    pcc,
+    correction_factor: Number(correction_factor.toFixed(3)),
+    rcc,
+    management_factor: Number(management_factor.toFixed(3)),
+    ecc,
+    target_population,
+    surplus_deficit,
+    capacity_status,
+    status_color,
+    recommendation,
+    intermediate_factors: {
+      slope_factor: Number(c_slope.toFixed(2)),
+      water_factor: Number(c_water.toFixed(2)),
+      road_factor: Number(m_road.toFixed(2)),
+      health_factor: Number(m_health.toFixed(2)),
+      sanitation_factor: Number(m_sanitation.toFixed(2))
+    }
+  };
+}
+
 export function buildClientDecisionReport(zoneCode, siteCode = null) {
   const cleanZoneCode = (zoneCode || 'ZONE-TN-001').toUpperCase();
   const zonesList = fallbackData.zones || [];
@@ -384,12 +450,12 @@ export const api = {
   simulateCapacity: (data) => fetchApi('/carrying-capacity/simulate', {
     method: 'POST',
     body: JSON.stringify(data),
-  }).catch(() => ({ status: "SUCCESS", simulation: data })),
+  }).catch(() => calculateClientCarryingCapacity(data)),
 
   calculateCarryingCapacity: (data) => fetchApi('/carrying-capacity/simulate', {
     method: 'POST',
     body: JSON.stringify(data),
-  }).catch(() => ({ status: "SUCCESS", simulation: data })),
+  }).catch(() => calculateClientCarryingCapacity(data)),
 
   getFieldSurveys: () => fetchApi('/field-surveys').catch(() => []),
   

@@ -66,10 +66,10 @@ class ReportService:
             },
             
             "actionable_directives": [
-                f"1. Immediate issuance of Stage-1 Pre-Evacuation Alert to Nilgiris Coonoor / Kotagiri administrative circles.",
-                f"2. Mobilize Tamil Nadu Disaster Response Force (TNDRF) staging unit to {primary_rec.get('site_name', 'SITE-07')}.",
-                f"3. Activate arterial evacuation corridor via NH-181 Mettupalayam Ghats bypass with transit time ~{primary_rec.get('estimated_travel_time_mins', 45)} minutes.",
-                f"4. Coordinate with Tamil Nadu Public Health & Family Welfare Department for emergency medical post deployment at {primary_rec.get('site_code', 'SITE-07')} (ECC {primary_rec.get('ecc', 3198)}).",
+                f"1. Immediate issuance of Stage-1 Pre-Evacuation Alert to {zone_data.get('name', 'threatened sector')} administrative circles ({zone_data.get('code')}).",
+                f"2. Mobilize Tamil Nadu Disaster Response Force (TNDRF) staging unit to {primary_rec.get('site_name', 'Allocated Relocation Haven')} ({primary_rec.get('site_code')}).",
+                f"3. Activate arterial evacuation corridor via {primary_rec.get('route_corridor') or 'designated highway transit corridor'} with transit time ~{primary_rec.get('estimated_travel_time_mins') or primary_rec.get('transit_time_mins', 45)} minutes.",
+                f"4. Coordinate with Tamil Nadu Public Health & Family Welfare Department for emergency medical post deployment at {primary_rec.get('site_code')} (ECC: {primary_rec.get('ecc', 3198)} persons capacity).",
                 f"5. Dispatch TNDMA Field Surveyors for real-time subsidence fissure validation via ZoneGuard Mobile app."
             ],
             

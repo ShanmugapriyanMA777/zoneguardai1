@@ -115,6 +115,119 @@ export const DEFAULT_DEFORMATION_POINTS = [
   { point_code: "PS-TN-028-01", velocity_mm_yr: 2.8, status: "Stable", coherence: 0.97, zone_code: "ZONE-TN-028 (Kolli Hills Bedrock)", orbit_track: "Sentinel-1 Track 129 Descending (C-SAR)" }
 ];
 
+export function buildClientDecisionReport(zoneCode, siteCode = null) {
+  const cleanZoneCode = (zoneCode || 'ZONE-TN-001').toUpperCase();
+  const zonesList = fallbackData.zones || [];
+  const sitesList = fallbackData.relocation_sites || [];
+
+  const zone = zonesList.find(z => z.code === cleanZoneCode || z.code.includes(cleanZoneCode)) || zonesList[0] || {
+    code: cleanZoneCode,
+    name: cleanZoneCode,
+    risk_level: "CRITICAL",
+    risk_score: 92,
+    population: 2840,
+    buildings: 420,
+    deformation_rate: 18.6,
+    slope: 34.2,
+    rainfall: 1480,
+    distance_to_river: 320,
+    district: "Nilgiris"
+  };
+
+  // Find allocated site: if siteCode is requested, use it; otherwise check reports_by_zone or default to optimal site
+  let site = null;
+  if (siteCode) {
+    site = sitesList.find(s => s.code === siteCode.toUpperCase() || s.code.includes(siteCode.toUpperCase()));
+  }
+  if (!site) {
+    const existingRep = fallbackData.reports_by_zone?.[zone.code];
+    const existingSiteCode = existingRep?.relocation_allocation?.site_code;
+    if (existingSiteCode) {
+      site = sitesList.find(s => s.code === existingSiteCode);
+    }
+  }
+  if (!site) {
+    site = sitesList[0] || {
+      code: "SITE-07",
+      name: "Mettupalayam Safe Plateau Relocation Township",
+      ecc: 5603,
+      slope: 4.8,
+      road_accessibility: "NH-181 4-Lane",
+      suitability_score: 89.8,
+      lat: 11.300,
+      lng: 76.950
+    };
+  }
+
+  // Calculate distance and travel time
+  const zLat = Number(zone.center_lat || zone.centroid_lat || 11.353);
+  const zLng = Number(zone.center_lng || zone.centroid_lng || 76.795);
+  const sLat = Number(site.lat || 11.300);
+  const sLng = Number(site.lng || 76.950);
+  const dLat = (sLat - zLat) * Math.PI / 180;
+  const dLon = (sLng - zLng) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(zLat * Math.PI / 180) * Math.cos(sLat * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const distKm = Math.max(4.5, Number((6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1)));
+  const transitMins = Math.max(15, Math.round((distKm / 32) * 60));
+
+  const pop = Number(zone.population || 2840);
+  const ecc = Number(site.ecc || 5600);
+  const surplus = ecc - pop;
+  const suitScore = Math.round(Number(site.suitability_score <= 1 ? site.suitability_score * 100 : site.suitability_score) || 92);
+  const safetyIdx = site.safety_index || Math.max(78, Math.round(100 - (Number(site.slope || 4) * 2.1)));
+
+  const now = new Date();
+  const timeStr = now.toISOString().replace('T', ' ').slice(0, 19);
+  const dateNum = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+
+  return {
+    report_id: `ZGAI-REP-${zone.code}-${site.code}-${dateNum}`,
+    generated_at: `${timeStr} UTC`,
+    district: `${zone.district || 'Tamil Nadu'} Multi-Hazard Sector`,
+    state: "Tamil Nadu, India",
+    issuing_authority: `Tamil Nadu State Disaster Management Authority (TNDMA) & ${zone.district || 'District'} DDMA`,
+    title: "ZONEGUARD AI: PRE-DISASTER PROACTIVE RELOCATION DECISION REPORT",
+    classification: "RESTRICTED / TNDMA DISASTER RESPONSE LEVEL-3",
+    target_zone: {
+      code: zone.code,
+      name: zone.name,
+      district: zone.district,
+      risk_level: zone.risk_level || (zone.risk_score >= 88 ? "CRITICAL" : "HIGH"),
+      risk_score: zone.risk_score || 92.4,
+      population_affected: pop,
+      buildings_at_risk: zone.buildings || Math.round(pop / 4.2),
+      deformation_rate_mm_yr: zone.deformation_rate || 18.6,
+      terrain_slope_deg: zone.slope || 34.2,
+      monsoon_rainfall_mm: zone.rainfall || 1480,
+      distance_to_river_m: zone.distance_to_river || 320,
+      recommended_action: zone.recommended_action || `Execute phased pre-monsoon relocation to ${site.name}.`
+    },
+    model_explanation: {
+      summary: `Zone ${zone.code} (${zone.name}) is classified as ${zone.risk_level || 'CRITICAL'} (Disaster Susceptibility ${zone.risk_score || 92}/100) primarily driven by active ground deformation (+${zone.deformation_rate || 18.6} mm/yr), steep terrain slope (${zone.slope || 34.2}°), and high monsoon rainfall (${zone.rainfall || 1480} mm). Satellite interferometry highlights active surface displacement, compounding structural vulnerability for habitations within this red-zone perimeter. Proactive settlement relocation to ${site.name} (${site.code}) is formally advised.`
+    },
+    relocation_allocation: {
+      site_code: site.code,
+      site_name: site.name,
+      suitability_score: suitScore,
+      safety_index: safetyIdx,
+      effective_carrying_capacity_ecc: ecc,
+      required_capacity: pop,
+      capacity_surplus_buffer: surplus,
+      evacuation_distance_km: distKm,
+      estimated_transit_time_mins: transitMins
+    },
+    actionable_directives: [
+      `1. Immediate issuance of Stage-1 Pre-Evacuation Alert to ${zone.name} (${zone.district || 'Tamil Nadu'}) administrative circles.`,
+      `2. Mobilize Tamil Nadu Disaster Response Force (TNDRF) staging unit to ${site.name} (${site.code}).`,
+      `3. Activate arterial evacuation corridor via ${site.road_accessibility || 'Highway Corridor'} with estimated transit time ~${transitMins} minutes.`,
+      `4. Coordinate emergency health and potable water supply at ${site.name} with verified surplus buffer of +${surplus} capacity.`,
+      `5. Dispatch field officers for real-time validation via ZoneGuard Mobile app.`
+    ]
+  };
+}
+
 export const api = {
   getStats: () => fetchApi('/dashboard/stats').catch(() => fallbackData.stats),
   getSummary: () => fetchApi('/dashboard/summary').catch(() => fallbackData.stats),
@@ -280,11 +393,16 @@ export const api = {
     return fetchApi(`/alerts${q ? `?${q}` : ''}`).catch(() => fallbackData.alerts);
   },
 
-  dismissAlert: (id) => fetchApi(`/alerts/${id}/dismiss`, { method: 'POST' }).catch(() => ({ status: "DISMISSED" })),
-  
-  getDecisionReport: (zoneCode) => fetchApi(`/reports/decision/${zoneCode}`).catch(() => {
-    return fallbackData.reports_by_zone?.[zoneCode] || fallbackData.reports_by_zone?.['ZONE-TN-001'] || null;
-  }),
+  getDecisionReport: async (zoneCode, siteCode = null) => {
+    try {
+      const q = siteCode ? `?site_code=${siteCode}` : '';
+      const rep = await fetchApi(`/reports/decision/${zoneCode}${q}`);
+      if (rep && rep.target_zone) return rep;
+      return buildClientDecisionReport(zoneCode, siteCode);
+    } catch {
+      return buildClientDecisionReport(zoneCode, siteCode);
+    }
+  },
 
   switchRole: (role) => fetchApi('/auth/switch-role', {
     method: 'POST',

@@ -125,9 +125,9 @@ export default function App() {
     }
   };
 
-  const handleOpenReport = async (zoneCode) => {
+  const handleOpenReport = async (zoneCode, siteCode = null) => {
     try {
-      const rep = await api.getDecisionReport(zoneCode || 'ZONE-TN-001');
+      const rep = await api.getDecisionReport(zoneCode || 'ZONE-TN-001', siteCode);
       setReportData(rep);
       setReportModalOpen(true);
     } catch (e) {
@@ -216,7 +216,8 @@ export default function App() {
 
           {currentTab === 'relocation' && (
             <RelocationPlanner
-              onSelectSiteForReport={() => handleOpenReport(selectedZone?.code || 'ZONE-TN-001')}
+              selectedZone={selectedZone}
+              onSelectSiteForReport={(zCode, sCode) => handleOpenReport(zCode, sCode)}
             />
           )}
 

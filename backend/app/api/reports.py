@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 from app.db.session import get_db
@@ -9,7 +10,7 @@ from app.services.report_service import report_engine
 router = APIRouter(prefix="/reports", tags=["Decision Reports"])
 
 @router.get("/decision/{zone_code}")
-def get_decision_report(zone_code: str, db: Session = Depends(get_db)):
+def get_decision_report(zone_code: str, site_code: Optional[str] = None, db: Session = Depends(get_db)):
     """
     Generates a structured Pre-Disaster Relocation Decision Report for DDMA / NDRF Authorities.
     """
@@ -62,7 +63,24 @@ def get_decision_report(zone_code: str, db: Session = Depends(get_db)):
     }
     
     recommendation = relocation_engine.evaluate_candidates_for_zone(zone_dict, site_dicts)
+    if site_code:
+        chosen_site = next((s for s in site_dicts if s["code"].upper() == site_code.upper()), None)
+        if chosen_site:
+            dist_km = relocation_engine.calculate_haversine(zone_dict["center_lat"], zone_dict["center_lng"], chosen_site["lat"], chosen_site["lng"])
+            recommendation["primary_recommendation"] = {
+                "site_code": chosen_site["code"],
+                "site_name": chosen_site["name"],
+                "suitability_score": int(chosen_site["suitability_score"] * 100 if chosen_site["suitability_score"] <= 1 else chosen_site["suitability_score"]),
+                "safety_score": int(chosen_site.get("safety_score") or 88),
+                "ecc": chosen_site["ecc"],
+                "required_population": zone_dict["population"],
+                "capacity_surplus": chosen_site["ecc"] - zone_dict["population"],
+                "distance_km": dist_km,
+                "estimated_travel_time_mins": int(dist_km / 35 * 60),
+                "route_corridor": chosen_site.get("road_accessibility", "National Highway Corridor"),
+                "decision_rationale": f"Explicitly allocated candidate haven {chosen_site['name']} ({chosen_site['code']}) for endangered population of {zone_dict['code']}."
+            }
+
     shap_data = shap_engine.explain_zone(zone_dict)
-    
     report = report_engine.build_decision_report(zone_dict, recommendation, shap_data)
     return report

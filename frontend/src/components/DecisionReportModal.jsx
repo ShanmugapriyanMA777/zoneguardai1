@@ -153,7 +153,9 @@ export default function DecisionReportModal({ reportData, onClose }) {
               <div className="p-2.5 bg-emerald-50 rounded border border-emerald-300">
                 <div className="text-emerald-800 text-[10px]">Effective Capacity (ECC):</div>
                 <div className="font-bold font-mono text-emerald-700 text-sm mt-0.5">{alloc.effective_carrying_capacity_ecc?.toLocaleString()} persons</div>
-                <div className="text-[10px] text-slate-600">Surplus: +{alloc.capacity_surplus_buffer}</div>
+                <div className="text-[10px] text-slate-600">
+                  Buffer: {Number(alloc.capacity_surplus_buffer) >= 0 ? `+${alloc.capacity_surplus_buffer?.toLocaleString()}` : `${alloc.capacity_surplus_buffer?.toLocaleString()}`}
+                </div>
               </div>
               <div className="p-2.5 bg-emerald-50 rounded border border-emerald-300">
                 <div className="text-emerald-800 text-[10px]">Evacuation Corridor:</div>

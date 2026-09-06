@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Compass, 
   CheckCircle2, 
@@ -11,14 +11,26 @@ import {
   Layers, 
   Info,
   MapPin,
-  TrendingUp
+  TrendingUp,
+  Navigation,
+  Users,
+  Building
 } from 'lucide-react';
 import { api } from '../utils/api';
 
-export default function RelocationPlanner({ onSelectSiteForReport }) {
+export default function RelocationPlanner({ selectedZone, onSelectSiteForReport }) {
   const [sites, setSites] = useState([]);
+  const [zones, setZones] = useState([]);
   const [ahpData, setAhpData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeZoneCode, setActiveZoneCode] = useState(selectedZone?.code || 'ZONE-TN-001');
+
+  // Sync if selectedZone changes from outside
+  useEffect(() => {
+    if (selectedZone?.code) {
+      setActiveZoneCode(selectedZone.code);
+    }
+  }, [selectedZone]);
 
   // Dynamic AHP Criteria Weights State
   const [customWeights, setCustomWeights] = useState({
@@ -31,16 +43,6 @@ export default function RelocationPlanner({ onSelectSiteForReport }) {
     land_availability: 10
   });
 
-  const criteriaMeta = {
-    hazard_safety: { label: "Hazard Avoidance", desc: "Distance from active red-zones & slope failure scars", color: "text-red-700" },
-    ground_stability: { label: "PSInSAR Stability", desc: "Low ground velocity (<2 mm/yr) and solid charnockite geology", color: "text-red-700" },
-    accessibility: { label: "Road Network", desc: "Direct highway access (NH-181) and all-weather road bandwidth", color: "text-amber-700" },
-    water_access: { label: "Water Availability", desc: "Groundwater potential & potable municipal pipeline", color: "text-emerald-700" },
-    healthcare: { label: "Medical Readiness", desc: "Proximity to primary health centers & emergency trauma care", color: "text-emerald-700" },
-    infrastructure: { label: "Existing Power/Infra", desc: "Grid power line proximity and communications tower access", color: "text-amber-700" },
-    land_availability: { label: "Carrying Capacity (ECC)", desc: "Effective habitable land area & gentle slope gradient", color: "text-slate-900" }
-  };
-
   useEffect(() => {
     loadPlannerData();
   }, []);
@@ -48,12 +50,14 @@ export default function RelocationPlanner({ onSelectSiteForReport }) {
   const loadPlannerData = async () => {
     try {
       setLoading(true);
-      const [sitesRes, ahpRes] = await Promise.all([
+      const [sitesRes, ahpRes, zonesRes] = await Promise.all([
         api.getRelocationSites(),
-        api.getAHPMatrix()
+        api.getAHPMatrix(),
+        api.getZones()
       ]);
       setSites(sitesRes || []);
       setAhpData(ahpRes);
+      setZones(zonesRes || []);
     } catch (e) {
       console.error("Error loading relocation planner data:", e);
     } finally {
@@ -67,72 +71,108 @@ export default function RelocationPlanner({ onSelectSiteForReport }) {
 
   const totalWeight = Object.values(customWeights).reduce((a, b) => a + b, 0);
 
-  // Recalculate site scores dynamically based on weights
-  const scoredSites = sites.map(site => {
-    const w = {
-      hazard: customWeights.hazard_safety / totalWeight,
-      stability: customWeights.ground_stability / totalWeight,
-      access: customWeights.accessibility / totalWeight,
-      water: customWeights.water_access / totalWeight,
-      health: customWeights.healthcare / totalWeight,
-      infra: customWeights.infrastructure / totalWeight,
-      land: customWeights.land_availability / totalWeight
-    };
+  // Identify current source red zone
+  const currentZone = useMemo(() => {
+    return zones.find(z => z.code === activeZoneCode) || 
+           (selectedZone?.code === activeZoneCode ? selectedZone : null) ||
+           zones[0] || {
+             code: "ZONE-TN-001",
+             name: "Coonoor Ghat Multi-Hazard Sector",
+             district: "Nilgiris",
+             population: 2840,
+             deformation_rate: 18.6,
+             risk_score: 99.6,
+             risk_level: "CRITICAL",
+             center_lat: 11.353,
+             center_lng: 76.795
+           };
+  }, [zones, activeZoneCode, selectedZone]);
 
-    const s_hazard = Math.max(0, 100 - site.hazard_risk_score);
-    const s_stability = site.ground_stability_score;
-    const s_access = site.road_access_score;
-    const s_water = site.water_availability_score;
-    const s_health = site.healthcare_access_score;
-    const s_infra = site.existing_infra_score;
-    const s_land = Math.min(100, Math.max(20, (site.ecc / 3500) * 100));
+  // Dynamic Haversine distance calculator
+  const calculateDistance = (zLat, zLng, sLat, sLng) => {
+    if (!zLat || !zLng || !sLat || !sLng) return { distKm: 24.2, transitMins: 45 };
+    const dLat = (sLat - zLat) * Math.PI / 180;
+    const dLon = (sLng - zLng) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(zLat * Math.PI / 180) * Math.cos(sLat * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const distKm = Math.max(3.5, Number((6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1)));
+    const transitMins = Math.max(15, Math.round((distKm / 32) * 60));
+    return { distKm, transitMins };
+  };
 
-    const totalScore = (
-      w.hazard * s_hazard +
-      w.stability * s_stability +
-      w.access * s_access +
-      w.water * s_water +
-      w.health * s_health +
-      w.infra * s_infra +
-      w.land * s_land
-    );
+  // Recalculate site scores dynamically based on weights and source zone
+  const scoredSites = useMemo(() => {
+    const zLat = Number(currentZone.center_lat || currentZone.centroid_lat || 11.353);
+    const zLng = Number(currentZone.center_lng || currentZone.centroid_lng || 76.795);
+    const pop = Number(currentZone.population || 2840);
 
-    let classification = "Highly Suitable";
-    let badgeColor = "bg-emerald-100 text-emerald-800 border-emerald-300";
-    if (totalScore < 40) {
-      classification = "Unsuitable";
-      badgeColor = "bg-red-100 text-red-800 border-red-300";
-    } else if (totalScore < 60) {
-      classification = "Moderate";
-      badgeColor = "bg-amber-100 text-amber-800 border-amber-300";
-    } else if (totalScore < 80) {
-      classification = "Suitable";
-      badgeColor = "bg-blue-100 text-blue-800 border-blue-300";
-    }
+    return sites.map(site => {
+      const w = {
+        hazard: customWeights.hazard_safety / totalWeight,
+        stability: customWeights.ground_stability / totalWeight,
+        access: customWeights.accessibility / totalWeight,
+        water: customWeights.water_access / totalWeight,
+        health: customWeights.healthcare / totalWeight,
+        infra: customWeights.infrastructure / totalWeight,
+        land: customWeights.land_availability / totalWeight
+      };
 
-    return {
-      ...site,
-      calculated_suitability: Math.round(totalScore * 10) / 10,
-      classification,
-      badgeColor,
-      safety_index: Math.round(s_hazard)
-    };
-  }).sort((a, b) => b.calculated_suitability - a.calculated_suitability);
+      const s_hazard = Math.max(0, 100 - (site.hazard_risk_score || 10));
+      const s_stability = site.ground_stability_score || 90;
+      const s_access = site.road_access_score || 85;
+      const s_water = site.water_availability_score || 88;
+      const s_health = site.healthcare_access_score || 80;
+      const s_infra = site.existing_infra_score || 82;
+      const s_land = Math.min(100, Math.max(20, ((site.ecc || 5000) / 3500) * 100));
+
+      const totalScore = (
+        w.hazard * s_hazard +
+        w.stability * s_stability +
+        w.access * s_access +
+        w.water * s_water +
+        w.health * s_health +
+        w.infra * s_infra +
+        w.land * s_land
+      );
+
+      const sLat = Number(site.lat || 11.300);
+      const sLng = Number(site.lng || 76.950);
+      const { distKm, transitMins } = calculateDistance(zLat, zLng, sLat, sLng);
+      const surplus = (site.ecc || 5600) - pop;
+
+      return {
+        ...site,
+        calculated_suitability: Math.round(totalScore * 10) / 10,
+        safety_index: Math.round(s_hazard),
+        distKm,
+        transitMins,
+        surplus
+      };
+    }).sort((a, b) => b.calculated_suitability - a.calculated_suitability);
+  }, [sites, customWeights, totalWeight, currentZone]);
 
   const consistency = ahpData?.consistency_evaluation || {
     consistency_ratio_cr: 0.067,
     is_consistent: true,
-    status: "CONSISTENT",
-    lambda_max: 7.42,
-    consistency_index_ci: 0.070
+    status: "CONSISTENT"
   };
+
+  const prominentZones = [
+    { code: "ZONE-TN-001", name: "Coonoor Ghat Sector", pop: 2840, risk: "CRITICAL" },
+    { code: "ZONE-TN-002", name: "Kotagiri Drop Sector", pop: 2150, risk: "CRITICAL" },
+    { code: "ZONE-TN-003", name: "Ketti Valley Habitation", pop: 3420, risk: "CRITICAL" },
+    { code: "ZONE-TN-004", name: "Gudalur Debris Corridor", pop: 1980, risk: "CRITICAL" },
+    { code: "ZONE-TN-014", name: "Kodaikanal Ghat Pass", pop: 2750, risk: "HIGH" },
+    { code: "ZONE-TN-023", name: "Manjolai Ridge", pop: 1620, risk: "HIGH" }
+  ];
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6 text-slate-900">
       {/* Header Banner */}
       <div className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-3xl bg-white border-2 border-slate-200 shadow-xl">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-700">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-700 shadow-sm">
             <Compass className="w-7 h-7" />
           </div>
           <div>
@@ -143,7 +183,7 @@ export default function RelocationPlanner({ onSelectSiteForReport }) {
               </span>
             </div>
             <p className="text-xs text-slate-600 font-medium mt-0.5">
-              Analytic Hierarchy Process (Saaty 1980) Multi-Criteria Evaluation & Candidate Relocation Ranking
+              Analytic Hierarchy Process (Saaty 1980) Multi-Criteria Evaluation & Unique Candidate Haven Allocation
             </p>
           </div>
         </div>
@@ -159,6 +199,79 @@ export default function RelocationPlanner({ onSelectSiteForReport }) {
           <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-400 text-xs font-black">
             CONSISTENT
           </span>
+        </div>
+      </div>
+
+      {/* Target Red Zone Relocation Selector */}
+      <div className="p-5 rounded-3xl bg-gradient-to-r from-red-50 via-amber-50 to-emerald-50 border-2 border-red-200/80 shadow-md space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-red-600" />
+            <span className="text-sm font-black text-slate-900 uppercase font-mono tracking-wider">
+              Select Endangered Red Zone to Evacuate:
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500 font-semibold">Select from all 28 sectors:</span>
+            <select
+              value={activeZoneCode}
+              onChange={(e) => setActiveZoneCode(e.target.value)}
+              className="px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer"
+            >
+              {zones.map(z => (
+                <option key={z.code} value={z.code}>
+                  {z.code} - {z.name} (Pop: {z.population?.toLocaleString()})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Quick select pills */}
+        <div className="flex flex-wrap gap-2 pt-1">
+          {prominentZones.map(pz => {
+            const isActive = pz.code === activeZoneCode;
+            return (
+              <button
+                key={pz.code}
+                onClick={() => setActiveZoneCode(pz.code)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 cursor-pointer ${
+                  isActive
+                    ? 'bg-red-600 text-white border-red-700 shadow-md scale-102'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-200'
+                }`}
+              >
+                <span>{pz.code}</span>
+                <span className="opacity-80 text-[11px]">({pz.name.split(' ')[0]})</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-red-100 text-red-700'}`}>
+                  {pz.pop.toLocaleString()}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Active Zone Summary strip */}
+        <div className="p-3 bg-white/90 rounded-2xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-red-100 text-red-700 flex items-center justify-center font-mono font-black text-xs">
+              RZ
+            </div>
+            <div>
+              <div className="font-extrabold text-slate-950 text-sm">{currentZone.name} ({currentZone.code})</div>
+              <div className="text-slate-600 text-[11px] font-medium">{currentZone.district || 'Western Ghats'} • Risk Score: <strong className="text-red-600">{currentZone.risk_score}/100</strong></div>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 font-mono">
+            <div className="text-right">
+              <div className="text-[10px] text-slate-500 uppercase">Population at Risk</div>
+              <div className="text-sm font-black text-slate-900">{currentZone.population?.toLocaleString()} citizens</div>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] text-slate-500 uppercase">Ground Deformation</div>
+              <div className="text-sm font-black text-red-600">+{currentZone.deformation_rate} mm/yr</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -186,7 +299,7 @@ export default function RelocationPlanner({ onSelectSiteForReport }) {
               max="40"
               value={customWeights.hazard_safety}
               onChange={(e) => handleWeightChange('hazard_safety', e.target.value)}
-              className="w-full accent-red-600"
+              className="w-full accent-red-600 cursor-pointer"
             />
           </div>
 
@@ -201,7 +314,7 @@ export default function RelocationPlanner({ onSelectSiteForReport }) {
               max="35"
               value={customWeights.ground_stability}
               onChange={(e) => handleWeightChange('ground_stability', e.target.value)}
-              className="w-full accent-red-600"
+              className="w-full accent-red-600 cursor-pointer"
             />
           </div>
 
@@ -216,7 +329,7 @@ export default function RelocationPlanner({ onSelectSiteForReport }) {
               max="30"
               value={customWeights.accessibility}
               onChange={(e) => handleWeightChange('accessibility', e.target.value)}
-              className="w-full accent-amber-600"
+              className="w-full accent-amber-600 cursor-pointer"
             />
           </div>
 
@@ -231,7 +344,7 @@ export default function RelocationPlanner({ onSelectSiteForReport }) {
               max="25"
               value={customWeights.water_access}
               onChange={(e) => handleWeightChange('water_access', e.target.value)}
-              className="w-full accent-emerald-600"
+              className="w-full accent-emerald-600 cursor-pointer"
             />
           </div>
         </div>
@@ -239,18 +352,18 @@ export default function RelocationPlanner({ onSelectSiteForReport }) {
 
       {/* Ranked Candidate Relocation Sites Table */}
       <div className="p-6 rounded-3xl bg-white border-2 border-slate-200 shadow-2xl space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div className="flex flex-wrap items-center justify-between border-b border-slate-200 pb-3 gap-2">
           <div>
             <h3 className="text-base font-black text-slate-950 flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-              <span>AHP Ranked Relocation Townships ({scoredSites.length} Candidate Sites)</span>
+              <span>AHP Ranked Candidate Havens for {currentZone.code} ({scoredSites.length} Sites)</span>
             </h3>
             <p className="text-xs text-slate-600 font-medium mt-0.5">
-              Ranked dynamically by Composite MCDA Suitability Score considering Tamil Nadu terrain constraints
+              Click <strong className="text-red-700">"Allocate & Report"</strong> on any candidate haven to generate a 100% unique Decision Report with custom transit, ECC surplus, and directives.
             </p>
           </div>
           <span className="text-xs font-mono font-bold text-amber-900 bg-amber-50 px-3 py-1 rounded-xl border border-amber-300">
-            Top Pick: SITE-07 (Mettupalayam)
+            Top Recommendation: {scoredSites[0]?.code} ({scoredSites[0]?.name?.split(' ')[0]})
           </span>
         </div>
 
@@ -259,18 +372,19 @@ export default function RelocationPlanner({ onSelectSiteForReport }) {
             <thead className="bg-slate-100 text-slate-700 font-mono uppercase text-[11px] border-b border-slate-200">
               <tr>
                 <th className="py-3 px-3">Rank</th>
-                <th className="py-3 px-3">Candidate Site</th>
+                <th className="py-3 px-3">Candidate Haven Site</th>
                 <th className="py-3 px-3 text-center">Safety Index</th>
-                <th className="py-3 px-3 text-center">Effective Capacity (ECC)</th>
-                <th className="py-3 px-3 text-center">Road Access</th>
+                <th className="py-3 px-3 text-center">Capacity (ECC vs Target)</th>
+                <th className="py-3 px-3 text-center">Evacuation Corridor</th>
                 <th className="py-3 px-3 text-center">Slope</th>
                 <th className="py-3 px-3 text-center">Suitability Score</th>
-                <th className="py-3 px-3 text-right">Status / Directive</th>
+                <th className="py-3 px-3 text-right">Unique Decision Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 font-medium">
               {scoredSites.map((site, index) => {
                 const isTop = index === 0;
+                const hasSurplus = site.surplus >= 0;
                 return (
                   <tr 
                     key={site.code} 
@@ -294,13 +408,17 @@ export default function RelocationPlanner({ onSelectSiteForReport }) {
                     <td className="py-3.5 px-3 text-center font-mono font-bold text-emerald-700 text-sm">
                       {site.safety_index || 94}/100
                     </td>
-                    <td className="py-3.5 px-3 text-center font-mono font-black text-emerald-700 text-sm">
-                      {site.ecc?.toLocaleString()} <span className="text-[10px] text-slate-600 font-normal">pers.</span>
+                    <td className="py-3.5 px-3 text-center font-mono text-xs">
+                      <div className="font-black text-slate-900">{site.ecc?.toLocaleString()} <span className="text-[10px] text-slate-500 font-normal">ECC</span></div>
+                      <div className={`text-[10px] font-bold ${hasSurplus ? 'text-emerald-700' : 'text-red-600'}`}>
+                        {hasSurplus ? `+${site.surplus?.toLocaleString()} surplus` : `${site.surplus?.toLocaleString()} deficit`}
+                      </div>
                     </td>
                     <td className="py-3.5 px-3 text-center">
-                      <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-800 border border-slate-300 text-[10px] font-bold">
-                        {site.road_accessibility}
-                      </span>
+                      <div className="font-bold text-slate-900 text-[11px]">{site.road_accessibility}</div>
+                      <div className="text-[10px] font-mono text-cyan-800 font-bold">
+                        {site.distKm} km (~{site.transitMins}m)
+                      </div>
                     </td>
                     <td className="py-3.5 px-3 text-center font-mono text-slate-800">
                       {site.slope}°
@@ -313,8 +431,9 @@ export default function RelocationPlanner({ onSelectSiteForReport }) {
                     </td>
                     <td className="py-3.5 px-3 text-right">
                       <button
-                        onClick={() => onSelectSiteForReport && onSelectSiteForReport(site.code)}
-                        className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-red-600 to-amber-600 hover:opacity-95 text-white font-bold text-xs shadow-md transition-all cursor-pointer border border-white/30"
+                        onClick={() => onSelectSiteForReport && onSelectSiteForReport(currentZone.code, site.code)}
+                        className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-red-600 to-amber-600 hover:opacity-95 text-white font-bold text-xs shadow-md transition-all cursor-pointer border border-white/30 hover:scale-102"
+                        title={`Generate unique relocation report allocating ${site.code} for ${currentZone.code}`}
                       >
                         Allocate & Report
                       </button>
